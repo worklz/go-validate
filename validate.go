@@ -1,17 +1,8 @@
 package validate
 
-type Validate struct {
-}
+type Validate *validate
 
-func New() *Validate {
-	v := &Validate{}
-	return v
-}
-
-// 校验结构体
-func (v *Validate) Check(validator ValidatorInterface) (err error) {
-
-	return nil
+type validate struct {
 }
 
 // 校验单个数据

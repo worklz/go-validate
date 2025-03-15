@@ -2,17 +2,15 @@ package validate
 
 import "reflect"
 
-// 无效的validate参数传递
-type InvalidValidateError struct {
-	Type reflect.Type
+// 无效的参数传递
+type InvalidParamError struct {
+	Message string
+	Type    reflect.Type
 }
 
-// Error returns InvalidValidationError message
-func (e *InvalidValidateError) Error() string {
-
+func (e *InvalidParamError) Error() string {
 	if e.Type == nil {
 		return "validate: (nil)"
 	}
-
 	return "validate: (nil " + e.Type.String() + ")"
 }

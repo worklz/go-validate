@@ -193,7 +193,7 @@ func (v *Validator) initAttr(scene string) error {
 	v.setValidatorInstanceAttr("Err", nil)
 	// 当前验证环境
 	v.setValidatorInstanceAttr("Scene", scene)
-
+	return nil
 }
 
 // 验证指定环境数据

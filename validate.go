@@ -1,9 +1,9 @@
 package validate
 
-type Validate *validate
+// type Validate *validate
 
-type validate struct {
-}
+// type validate struct {
+// }
 
 // 校验单个数据
 // data			待验证的数据

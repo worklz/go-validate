@@ -8,25 +8,37 @@ import (
 )
 
 type ValidatorInterface interface {
-	Rules() map[string]interface{}
-	Messages() map[string]string
-	Titles() map[string]string
-	Scenes() map[string][]string
+	SetValidatorInstance(validator ValidatorInterface)
+	DefineRules() map[string]interface{}
+	GetRules() (rules map[string]interface{}, err error)
+	SetRules(rules map[string]interface{}) (err error)
+	DefineMessages() map[string]string
+	GetMessages() (messages map[string]string, err error)
+	SetMessages(messages map[string]string) (err error)
+	DefineTitles() map[string]string
+	GetTitles() (titles map[string]string, err error)
+	SetTitles(titles map[string]string) (err error)
+	DefineScenes() map[string][]string
+	GetScenes() (scenes map[string][]string, err error)
+	SetScenes(scenes map[string][]string) (err error)
 	Check() error
 	HandleData(scene string) error
 }
 
 type Validator struct {
-	Scene     string // 当前验证环境
-	ErrPrefix string // 错误前缀
-	Err       error  // 错误
+	Rules     map[string]interface{} // 验证规则
+	Messages  map[string]string      // 验证提示信息
+	Titles    map[string]string      // 验证字段标题
+	Scene     string                 // 当前验证环境
+	ErrPrefix string                 // 错误前缀
+	Err       error                  // 错误
 
 	validatorInstance      ValidatorInterface // 验证器实例
 	validatorInstanceValue reflect.Value      //验证器实例反射值
 }
 
 // 设置验证器实例
-func (v *Validator) setValidatorInstance(validator ValidatorInterface) {
+func (v *Validator) SetValidatorInstance(validator ValidatorInterface) {
 	v.validatorInstance = validator
 
 	// 获取指针的反射值
@@ -38,6 +50,12 @@ func (v *Validator) setValidatorInstance(validator ValidatorInterface) {
 		// 获取指针指向的实际对象的反射值
 		v.validatorInstanceValue = validatorInstanceValue.Elem()
 	}
+
+	// 设置定义的属性
+	v.SetRules(v.DefineRules())
+	v.SetMessages(v.DefineMessages())
+	v.SetTitles(v.DefineTitles())
+	v.SetScenes(v.DefineScenes())
 }
 
 // 设置验证器实例属性
@@ -166,24 +184,205 @@ func (v *Validator) SetError(err interface{}) error {
 	return newErr
 }
 
-// 验证规则
-func (v *Validator) Rules() map[string]interface{} {
+// 定义验证规则
+func (v *Validator) DefineRules() map[string]interface{} {
 	return nil
 }
 
-// 验证提示信息
-func (v *Validator) Messages() map[string]string {
+// 获取验证规则
+func (v *Validator) GetRules() (rules map[string]interface{}, err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	value, err := v.getValidatorInstanceAttr("Rules")
+	if err != nil {
+		return
+	}
+	var ok bool
+	rules, ok = value.(map[string]interface{})
+	if !ok {
+		err = v.SetError("Rules 属性类型需为map[string]interface{}形式")
+	}
+	return
+}
+
+// 设置验证规则
+func (v *Validator) SetRules(rules map[string]interface{}) (err error) {
+	if rules == nil {
+		return
+	}
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+
+	currRules, err := v.GetRules()
+	if err != nil {
+		return
+	}
+	if currRules == nil {
+		currRules = map[string]interface{}{}
+	}
+	for k, v := range rules {
+		currRules[k] = v
+	}
+
+	err = v.setValidatorInstanceAttr("Rules", currRules)
+	if err != nil {
+		err = v.SetError(err)
+	}
+	return
+}
+
+// 定义验证提示信息
+func (v *Validator) DefineMessages() map[string]string {
 	return nil
 }
 
-// 验证字段标题
-func (v *Validator) Titles() map[string]string {
+// 获取验证提示信息
+func (v *Validator) GetMessages() (messages map[string]string, err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	value, err := v.getValidatorInstanceAttr("Messages")
+	if err != nil {
+		return
+	}
+	var ok bool
+	messages, ok = value.(map[string]string)
+	if !ok {
+		err = v.SetError("Messages 属性类型需为map[string]string形式")
+	}
+	return
+}
+
+// 设置验证提示信息
+func (v *Validator) SetMessages(messages map[string]string) (err error) {
+	if messages == nil {
+		return
+	}
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+
+	currMessages, err := v.GetMessages()
+	if err != nil {
+		return
+	}
+	if currMessages == nil {
+		currMessages = map[string]string{}
+	}
+	for k, v := range messages {
+		currMessages[k] = v
+	}
+	err = v.setValidatorInstanceAttr("Messages", currMessages)
+	if err != nil {
+		err = v.SetError(err)
+	}
+	return
+}
+
+// 定义验证字段标题
+func (v *Validator) DefineTitles() map[string]string {
 	return nil
 }
 
-// 验证场景，定义要验证的字段
-func (v *Validator) Scenes() map[string][]string {
+// 获取验证字段标题
+func (v *Validator) GetTitles() (titles map[string]string, err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	value, err := v.getValidatorInstanceAttr("Titles")
+	if err != nil {
+		return
+	}
+	var ok bool
+	titles, ok = value.(map[string]string)
+	if !ok {
+		err = v.SetError("Titles 属性类型需为map[string]string形式")
+	}
+	return
+}
+
+// 设置验证字段标题
+func (v *Validator) SetTitles(titles map[string]string) (err error) {
+	if titles == nil {
+		return
+	}
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+
+	currTitles, err := v.GetTitles()
+	if err != nil {
+		return
+	}
+	if currTitles == nil {
+		currTitles = map[string]string{}
+	}
+	for k, v := range titles {
+		currTitles[k] = v
+	}
+	err = v.setValidatorInstanceAttr("Titles", currTitles)
+	if err != nil {
+		err = v.SetError(err)
+	}
+	return
+}
+
+// 定义验证场景，定义要验证的字段
+func (v *Validator) DefineScenes() map[string][]string {
 	return nil
+}
+
+// 获取验证场景
+func (v *Validator) GetScenes() (scenes map[string][]string, err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	value, err := v.getValidatorInstanceAttr("Scenes")
+	if err != nil {
+		return
+	}
+	var ok bool
+	scenes, ok = value.(map[string][]string)
+	if !ok {
+		err = v.SetError("Scenes 属性类型需为map[string][]string形式")
+	}
+	return
+}
+
+// 设置验证场景
+func (v *Validator) SetScenes(scenes map[string][]string) (err error) {
+	if scenes == nil {
+		return
+	}
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+
+	currScenes, err := v.GetScenes()
+	if err != nil {
+		return
+	}
+	if currScenes == nil {
+		currScenes = map[string][]string{}
+	}
+	for k, v := range scenes {
+		currScenes[k] = v
+	}
+	err = v.setValidatorInstanceAttr("Scenes", currScenes)
+	if err != nil {
+		err = v.SetError(err)
+	}
+	return
 }
 
 // 初始化属性

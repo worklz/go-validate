@@ -4,7 +4,8 @@ import "errors"
 
 // 验证其规则
 type Rule struct {
-	Name string // 规则名称
+	Name  string                                                                    // 规则名称
+	Check func(value interface{}, param string, datas map[string]interface{}) error // 校验方法
 }
 
 // 注册规则

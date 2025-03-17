@@ -33,7 +33,7 @@ func (u *UserLogin) DefineScenes() map[string][]string {
 }
 
 func main() {
-	userLogin := &UserLogin{Username: "admin", Password: "123456"}
+	userLogin := &UserLogin{Username: "", Password: "123456"}
 	validate.Create(userLogin)
 	err := userLogin.Check()
 	if err != nil {

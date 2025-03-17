@@ -45,7 +45,7 @@ func (v *Validator) SetValidatorInstance(validator ValidatorInterface) {
 	// 获取指针的反射值
 	validatorInstanceValue := reflect.ValueOf(v.validatorInstance)
 	// 检查传入的是否为指针
-	if validatorInstanceValue.Kind() != reflect.Ptr || validatorInstanceValue.IsNil() {
+	if validatorInstanceValue.Kind() != reflect.Ptr || validatorInstanceValue.IsNil() || validatorInstanceValue.Kind() != reflect.Struct {
 		v.SetSystemError("未通过正确方法实例当前验证器！")
 	} else {
 		// 获取指针指向的实际对象的反射值
@@ -57,6 +57,39 @@ func (v *Validator) SetValidatorInstance(validator ValidatorInterface) {
 	v.SetMessages(v.DefineMessages())
 	v.SetTitles(v.DefineTitles())
 	v.SetScenes(v.DefineScenes())
+	// 设置验证数据
+	v.setDatasByJsonTag()
+}
+
+// 设置结构体验证数据，根据json标签
+func (v *Validator) setDatasByJsonTag() (err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	datas := make(map[string]interface{})
+
+	// 获取结构体的类型
+	typeOf := v.validatorInstanceValue.Type()
+	// 遍历结构体的所有字段
+	for i := 0; i < v.validatorInstanceValue.NumField(); i++ {
+		field := v.validatorInstanceValue.Field(i)
+		typeField := typeOf.Field(i)
+		// 获取 JSON 标签
+		jsonTag := typeField.Tag.Get("json")
+		// 解析 JSON 标签，处理可能的选项，如 omitempty
+		if commaIndex := strings.Index(jsonTag, ","); commaIndex != -1 {
+			jsonTag = jsonTag[:commaIndex]
+		}
+		// 如果 JSON 标签不为空，则使用该标签作为键
+		if jsonTag != "" {
+			datas[jsonTag] = field.Interface()
+		}
+	}
+
+	// 设置验证数据
+	err = v.setValidatorInstanceAttr("Datas", datas)
+	return
 }
 
 // 调用验证器实例方法
@@ -457,6 +490,40 @@ func (v *Validator) SetDatas(datas map[string]interface{}) (err error) {
 	if err != nil {
 		err = v.SetSystemError(err)
 	}
+
+	// 判断属性json标签，并赋值
+	// 获取结构体的类型
+	t := v.validatorInstanceValue.Type()
+	// 遍历结构体的所有字段
+	for i := 0; i < v.validatorInstanceValue.NumField(); i++ {
+		field := t.Field(i)
+		// 获取 JSON 标签
+		jsonTag := field.Tag.Get("json")
+		// 解析 JSON 标签，处理可能的选项，如 omitempty
+		if commaIndex := strings.Index(jsonTag, ","); commaIndex != -1 {
+			jsonTag = jsonTag[:commaIndex]
+		}
+		if jsonTag == "" {
+			continue
+		}
+		jsonTagValue, exists := datas[jsonTag]
+		if !exists {
+			continue
+		}
+		// 获取字段的值
+		structField := v.validatorInstanceValue.Field(i)
+		// 检查字段是否可设置
+		if structField.CanSet() {
+			// 将传入的值转换为反射值
+			val := reflect.ValueOf(jsonTagValue)
+			// 检查值的类型是否与字段类型匹配
+			if val.Type().AssignableTo(structField.Type()) {
+				// 设置字段的值
+				structField.Set(val)
+			}
+		}
+	}
+
 	return
 }
 
@@ -561,11 +628,19 @@ func (v *Validator) handleCheck() (err error) {
 	if err != nil {
 		return
 	}
+	titles, err := v.GetTitles()
+	if err != nil {
+		return
+	}
 	for dataKey, dataRules := range checkRules {
 		if dataRules == nil {
 			continue
 		}
 		dataValue, dataExists := datas[dataKey]
+		dataTitle, _ := titles[dataKey]
+		if dataTitle == "" {
+			dataTitle = dataKey
+		}
 		// 定义的规则字符串
 		dataRuleStr, isStr := dataRules.(string)
 		if isStr {
@@ -592,14 +667,14 @@ func (v *Validator) handleCheck() (err error) {
 				ruleParam = dataRule[colonIndex+1:]
 				// 判断是否为注册的规则
 				if rule, ok := Rules[ruleName]; ok {
-					err = rule.Check(dataValue, ruleParam, datas)
+					err = rule.Check(dataValue, ruleParam, datas, dataTitle)
 					if err != nil {
 						return err
 					}
 					continue
 				}
 				// 判断是否为结构体内可调用方法
-				err = v.callValidatorInstanceMethod(ruleName, []interface{}{dataValue, ruleParam, datas})
+				err = v.callValidatorInstanceMethod(ruleName, []interface{}{dataValue, ruleParam, datas, dataTitle})
 				if err != nil {
 					return
 				}

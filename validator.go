@@ -93,39 +93,6 @@ func (v *Validator) setDatasByJsonTag() (err error) {
 	return
 }
 
-// 调用验证器实例方法
-// paramTypes 参数类型
-// returnTypes 返回值类型
-// args 参数
-func (v *Validator) callValidatorInstanceMethod(methodName string, paramTypes []reflect.Type, returnTypes []reflect.Type, args []interface{}) (err error) {
-	err = v.GetError()
-	if err != nil {
-		return
-	}
-	// 获取指定名称的方法
-	method := v.validatorInstanceValue.MethodByName(methodName)
-	// 判断方法是否有效
-	if !method.IsValid() {
-		err = v.SetSystemError(fmt.Sprintf("方法%s不可调用", methodName))
-		return
-	}
-
-	// 准备反射调用所需的参数
-	var reflectArgs []reflect.Value
-	for _, arg := range args {
-		reflectArgs = append(reflectArgs, reflect.ValueOf(arg))
-	}
-
-	// 调用方法并获取返回值
-	results := method.Call(reflectArgs)
-	if len(results) > 0 {
-		if resErr, ok := results[0].Interface().(error); ok {
-			err = resErr
-		}
-	}
-	return
-}
-
 // 设置验证器实例属性
 func (v *Validator) setValidatorInstanceAttr(attr string, value interface{}) (err error) {
 	err = v.GetError()
@@ -626,6 +593,72 @@ func (v *Validator) getCheckRules() (rules map[string]interface{}, err error) {
 	return
 }
 
+// 调用验证器实例的规则方法
+// paramTypes 参数类型
+// returnTypes 返回值类型
+// params 参数
+func (v *Validator) callValidatorInstanceRuleMethod(methodName string, paramTypes []reflect.Type, returnTypes []reflect.Type, params []interface{}) (err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	// 获取指定名称的方法
+	method := v.validatorInstanceValue.MethodByName(methodName)
+	// 判断方法是否有效
+	if !method.IsValid() {
+		err = v.SetSystemError(fmt.Sprintf("方法%s不可调用", methodName))
+		return
+	}
+
+	// 检查参数数量(有一个是接收者)
+	methodParamNum := method.Type().NumIn() - 1
+	if methodParamNum != len(paramTypes) {
+		err = v.SetSystemError(fmt.Sprintf("方法%s需要%d个参数，实际提供了%d个", methodName, methodParamNum, len(paramTypes)))
+		return
+	}
+
+	// 检查参数类型
+	for i, param := range paramTypes {
+		methodParamType := method.Type().In(i + 1)
+		paramType := reflect.TypeOf(param)
+		if !paramType.AssignableTo(methodParamType) {
+			err = v.SetSystemError(fmt.Sprintf("方法%s的第%d个参数类型不正确，预期为%s，实际为%s", methodName, i+1, paramType, methodParamType))
+			return
+		}
+	}
+
+	// 检查返回值数量
+	methodRetuenNum := method.Type().NumOut()
+	if methodRetuenNum != len(returnTypes) {
+		err = v.SetSystemError(fmt.Sprintf("方法%s返回%d个值，但预期返回%d个", methodName, methodRetuenNum, len(returnTypes)))
+		return
+	}
+
+	// 检查返回值类型
+	for i, returnType := range returnTypes {
+		methodReturnType := method.Type().Out(i)
+		if !returnType.AssignableTo(methodReturnType) {
+			err = v.SetSystemError(fmt.Sprintf("方法%s的第%d个返回值类型不正确，预期为%s，实际为%s", methodName, i+1, paramType, methodParamType))
+			return
+		}
+	}
+
+	// 准备反射调用所需的参数
+	var paramValues []reflect.Value
+	for _, param := range params {
+		paramValues = append(paramValues, reflect.ValueOf(param))
+	}
+
+	// 调用方法并获取返回值
+	results := method.Call(paramValues)
+	if len(results) > 0 {
+		if resErr, ok := results[0].Interface().(error); ok {
+			err = resErr
+		}
+	}
+	return
+}
+
 // 处理验证
 func (v *Validator) handleCheck() (err error) {
 	checkRules, err := v.getCheckRules()
@@ -691,7 +724,7 @@ func (v *Validator) handleCheck() (err error) {
 					continue
 				}
 				// 判断是否为结构体内可调用方法
-				err = v.callValidatorInstanceMethod(ruleName, []interface{}{dataValue, ruleParam, datas, dataTitle})
+				err = v.callValidatorInstanceRuleMethod(ruleName, []interface{}{dataValue, ruleParam, datas, dataTitle})
 				if err != nil {
 					return
 				}

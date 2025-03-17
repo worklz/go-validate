@@ -94,7 +94,10 @@ func (v *Validator) setDatasByJsonTag() (err error) {
 }
 
 // 调用验证器实例方法
-func (v *Validator) callValidatorInstanceMethod(methodName string, args []interface{}) (err error) {
+// paramTypes 参数类型
+// returnTypes 返回值类型
+// args 参数
+func (v *Validator) callValidatorInstanceMethod(methodName string, paramTypes []reflect.Type, returnTypes []reflect.Type, args []interface{}) (err error) {
 	err = v.GetError()
 	if err != nil {
 		return

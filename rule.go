@@ -1,6 +1,8 @@
 package validate
 
-import "errors"
+import (
+	"errors"
+)
 
 // 验证其规则
 type Rule struct {
@@ -15,6 +17,17 @@ func RegisterRule(rule Rule) (err error) {
 		return
 	}
 	Rules[rule.Name] = rule
+	return
+}
+
+// 注册多个规则
+func RegisterRules(rule []Rule) (err error) {
+	for _, v := range rule {
+		err = RegisterRule(v)
+		if err != nil {
+			return
+		}
+	}
 	return
 }
 

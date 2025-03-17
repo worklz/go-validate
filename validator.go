@@ -29,6 +29,7 @@ type Validator struct {
 	Rules           map[string]interface{} // 验证规则
 	Messages        map[string]string      // 验证提示信息
 	Titles          map[string]string      // 验证字段标题
+	Scenes          map[string][]string    // 验证场景
 	Datas           map[string]interface{} // 验证数据
 	CheckRules      map[string]interface{} // 当前验证规则
 	SystemErrPrefix string                 // 系统错误前缀
@@ -45,7 +46,7 @@ func (v *Validator) SetValidatorInstance(validator ValidatorInterface) {
 	// 获取指针的反射值
 	validatorInstanceValue := reflect.ValueOf(v.validatorInstance)
 	// 检查传入的是否为指针
-	if validatorInstanceValue.Kind() != reflect.Ptr || validatorInstanceValue.IsNil() || validatorInstanceValue.Kind() != reflect.Struct {
+	if validatorInstanceValue.Kind() != reflect.Ptr || validatorInstanceValue.IsNil() {
 		v.SetSystemError("未通过正确方法实例当前验证器！")
 	} else {
 		// 获取指针指向的实际对象的反射值
@@ -53,10 +54,10 @@ func (v *Validator) SetValidatorInstance(validator ValidatorInterface) {
 	}
 
 	// 设置定义的属性
-	v.SetRules(v.DefineRules())
-	v.SetMessages(v.DefineMessages())
-	v.SetTitles(v.DefineTitles())
-	v.SetScenes(v.DefineScenes())
+	v.SetRules(v.validatorInstance.DefineRules())
+	v.SetMessages(v.validatorInstance.DefineMessages())
+	v.SetTitles(v.validatorInstance.DefineTitles())
+	v.SetScenes(v.validatorInstance.DefineScenes())
 	// 设置验证数据
 	v.setDatasByJsonTag()
 }
@@ -102,7 +103,7 @@ func (v *Validator) callValidatorInstanceMethod(methodName string, args []interf
 	method := v.validatorInstanceValue.MethodByName(methodName)
 	// 判断方法是否有效
 	if !method.IsValid() {
-		err = v.SetSystemError(fmt.Sprintf("方法[%s]不可调用", methodName))
+		err = v.SetSystemError(fmt.Sprintf("方法%s不可调用", methodName))
 		return
 	}
 
@@ -248,7 +249,7 @@ func (v *Validator) SetSystemError(err interface{}) error {
 	if !strings.HasPrefix(resErrMsg, errPrefix) {
 		resErrMsg = errPrefix + resErrMsg
 	}
-	return v.SetSystemError(resErrMsg)
+	return v.SetError(resErrMsg)
 }
 
 // 设置验证器错误
@@ -587,7 +588,9 @@ func (v *Validator) CheckScene(scene string) (err error) {
 	if err != nil {
 		return
 	}
-	return nil
+	// 验证
+	err = v.handleCheck()
+	return
 }
 
 // 验证
@@ -597,6 +600,8 @@ func (v *Validator) Check() (err error) {
 	if err != nil {
 		return
 	}
+	// 验证
+	err = v.handleCheck()
 	return
 }
 
@@ -628,6 +633,10 @@ func (v *Validator) handleCheck() (err error) {
 	if err != nil {
 		return
 	}
+	messages, err := v.GetMessages()
+	if err != nil {
+		return
+	}
 	titles, err := v.GetTitles()
 	if err != nil {
 		return
@@ -637,8 +646,8 @@ func (v *Validator) handleCheck() (err error) {
 			continue
 		}
 		dataValue, dataExists := datas[dataKey]
-		dataTitle, _ := titles[dataKey]
-		if dataTitle == "" {
+		dataTitle, dataTitleExists := titles[dataKey]
+		if !dataTitleExists || dataTitle == "" {
 			dataTitle = dataKey
 		}
 		// 定义的规则字符串
@@ -649,7 +658,7 @@ func (v *Validator) handleCheck() (err error) {
 			}
 			dataRuleSlice := strings.Split(dataRuleStr, "|")
 			// 判断数据是否为空
-			if dataRuleSlice[0] == "required" && (!dataExists || isEmpty(dataValue)) {
+			if dataRuleSlice[0] != "required" && (!dataExists || isEmpty(dataValue)) {
 				continue
 			}
 			for _, dataRule := range dataRuleSlice {
@@ -662,14 +671,19 @@ func (v *Validator) handleCheck() (err error) {
 				if colonIndex == -1 {
 					ruleName = dataRule
 					ruleParam = ""
+				} else {
+					ruleName = dataRule[:colonIndex]
+					ruleParam = dataRule[colonIndex+1:]
 				}
-				ruleName = dataRule[:colonIndex]
-				ruleParam = dataRule[colonIndex+1:]
 				// 判断是否为注册的规则
 				if rule, ok := Rules[ruleName]; ok {
 					err = rule.Check(dataValue, ruleParam, datas, dataTitle)
 					if err != nil {
-						return err
+						defineMessage := messages[dataKey+"."+ruleName]
+						if defineMessage != "" {
+							err = v.SetError(defineMessage)
+						}
+						return
 					}
 					continue
 				}
@@ -682,15 +696,18 @@ func (v *Validator) handleCheck() (err error) {
 
 			continue
 		}
-		// 定义的验证方法
-		_, isFun := dataRules.(func() error)
-		if isFun {
-			// 定义的验证方法
-			err = v.SetError("定义的验证方法fun形式，正在努力开发中...")
-			return
+		// 定义的规则为闭包验证方法
+		if dataRuleFun, isFun := dataRules.(func(value interface{}, datas map[string]interface{}, title string) error); isFun {
+			err = dataRuleFun(dataValue, datas, dataTitle)
+			if err != nil {
+				return
+			}
 			continue
 		}
+		err = v.SetSystemError(fmt.Sprintf("参数%s验证规则定义需为string或func(value interface{}, datas map[string]interface{}, title string) error类型", dataKey))
+		return
 	}
+
 	return
 }
 

@@ -8,9 +8,6 @@ import (
 
 type UserLogin struct {
 	validate.Validator
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Captcha  string `json:"captcha"`
 }
 
 func (u *UserLogin) DefineRules() map[string]interface{} {
@@ -18,13 +15,6 @@ func (u *UserLogin) DefineRules() map[string]interface{} {
 		"username": "required",
 		"password": "required",
 		"captcha":  "required",
-	}
-}
-
-func (u *UserLogin) DefineMessages() map[string]string {
-	return map[string]string{
-		"username.required": "请输入用户名",
-		"password.required": "请输入密码",
 	}
 }
 
@@ -36,13 +26,31 @@ func (u *UserLogin) DefineTitles() map[string]string {
 	}
 }
 
+func (u *UserLogin) DefineScenes() map[string][]string {
+	return map[string][]string{
+		"login":    {"username", "password", "captcha"},
+		"register": {"username", "password"},
+	}
+}
+
 func main() {
-	userLogin := &UserLogin{Username: "admin", Password: "123456"}
+	userLogin := &UserLogin{}
 	validate.Create(userLogin)
+	userLogin.SetDatas(map[string]interface{}{
+		"username": "admin",
+		"password": "123456",
+	})
 	err := userLogin.Check()
 	if err != nil {
-		fmt.Printf("验证失败！%v\r\n", err)
+		fmt.Printf("登录验证失败！%v\r\n", err)
 	} else {
-		fmt.Println("验证通过")
+		fmt.Println("登录验证通过")
+	}
+
+	err = userLogin.CheckScene("register")
+	if err != nil {
+		fmt.Printf("注册验证失败！%v\r\n", err)
+	} else {
+		fmt.Println("注册验证通过")
 	}
 }

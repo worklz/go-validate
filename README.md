@@ -17,7 +17,6 @@ import "github.com/worklz/go-validate"
 ```
 
 
-
 ## 使用示例
 
 - [简单使用](https://github.com/worklz/go-validate/example/simple/main.go)
@@ -27,3 +26,8 @@ import "github.com/worklz/go-validate"
 - [验证器内方法定义为验证规则](https://github.com/worklz/go-validate/example/validator_method_rule/main.go)
 - [定义参数验证规则为闭包](https://github.com/worklz/go-validate/example/func_rule/main.go)
 - [验证后处理数据](https://github.com/worklz/go-validate/example/handle_datas/main.go)
+
+## 验证规则
+
+以下为内置验证规则，可直接使用，更多规则请自行定义（参考上述：注册验证规则示例）。
+

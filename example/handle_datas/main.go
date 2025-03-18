@@ -43,13 +43,13 @@ func (u *UserParams) DefineScenes() map[string][]string {
 func (u *UserParams) HandleDatas(datas map[string]interface{}, scene string) (err error) {
 	switch scene {
 	case "login":
-		err = u.SetData("user_id", 1)
+		err = u.SetData("user_id", uint(1))
 		if err != nil {
 			return
 		}
 		fmt.Println("登录验证后处理数据")
 	case "register":
-		err = u.SetData("user_id", 2)
+		err = u.SetData("user_id", uint(2))
 		if err != nil {
 			return
 		}

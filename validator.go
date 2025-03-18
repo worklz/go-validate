@@ -508,6 +508,11 @@ func (v *Validator) SetDatas(datas map[string]interface{}) (err error) {
 		if structField.CanSet() {
 			// 将传入的值转换为反射值
 			val := reflect.ValueOf(jsonTagValue)
+			// 检查值的类型是否匹配
+			if !val.Type().AssignableTo(structField.Type()) {
+				err = v.SetSystemError(fmt.Errorf("属性%s类型%v与传入值类型%v不匹配", field.Name, field.Type, val.Type()))
+				return
+			}
 			// 检查值的类型是否与字段类型匹配
 			if val.Type().AssignableTo(structField.Type()) {
 				// 设置字段的值

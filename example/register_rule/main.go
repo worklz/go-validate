@@ -30,7 +30,7 @@ func (u *UserLogin) DefineTitles() map[string]string {
 func main() {
 	// 注册自定义规则
 	validate.RegisterRules([]validate.Rule{
-		{Name: "alphaNum", Check: func(value interface{}, param string, datas map[string]interface{}, title string) error {
+		{Name: "alphaNum", Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {
 			valueStr, ok := value.(string)
 			if !ok {
 				return fmt.Errorf("%s不能为空", title)

@@ -43,16 +43,16 @@ func (u *UserParams) DefineScenes() map[string][]string {
 func (u *UserParams) HandleDatas(datas map[string]interface{}, scene string) (err error) {
 	switch scene {
 	case "login":
+		// SetData 会立即同步到datas和结构体json标签对应的属性
 		err = u.SetData("user_id", uint(1))
 		if err != nil {
 			return
 		}
 		fmt.Println("登录验证后处理数据")
 	case "register":
-		err = u.SetData("user_id", uint(2))
-		if err != nil {
-			return
-		}
+		// 修改datas值会在校验结束后同步到结构体json标签对应的属性
+		// 效率高一些，但在验证周期内不会更新结构体json标签对应的属性
+		datas["user_id"] = uint(2)
 		fmt.Println("注册验证后处理数据")
 	case "info":
 		err = u.SetError("用户不存在")

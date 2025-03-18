@@ -26,6 +26,7 @@ import "github.com/worklz/go-validate"
 - [验证器内方法定义为验证规则](https://github.com/worklz/go-validate/example/validator_method_rule/main.go)
 - [定义参数验证规则为闭包](https://github.com/worklz/go-validate/example/func_rule/main.go)
 - [验证后处理数据](https://github.com/worklz/go-validate/example/handle_datas/main.go)
+- [验证单个数据](https://github.com/worklz/go-validate/example/check_var/main.go)
 
 ## 验证规则
 

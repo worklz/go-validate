@@ -2,6 +2,7 @@ package validate
 
 import (
 	"reflect"
+	"unicode"
 )
 
 // 获取实例的完整包名
@@ -47,4 +48,36 @@ func isEmpty(value interface{}) bool {
 		// 其他基本类型，判断是否为零值
 		return reflect.DeepEqual(value, reflect.Zero(v.Type()).Interface())
 	}
+}
+
+// 判断是否为数字类型
+func isNumericType(i interface{}) bool {
+	switch i.(type) {
+	case int, int8, int16, int32, int64:
+		return true
+	case uint, uint8, uint16, uint32, uint64:
+		return true
+	case float32, float64:
+		return true
+	default:
+		return false
+	}
+}
+
+// 判断字符串是否全由数字组成
+func isNumericString(s string) bool {
+	for _, r := range s {
+		if !unicode.IsDigit(r) {
+			return false
+		}
+	}
+	return true
+}
+
+// 判断变量是否为数字类型，或者字符串全由数字组成
+func isNumeric(v interface{}) bool {
+	if num, ok := v.(string); ok {
+		return isNumericString(num)
+	}
+	return isNumericType(v)
 }

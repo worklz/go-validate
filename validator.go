@@ -469,7 +469,7 @@ func (v *Validator) GetDatas() (datas map[string]interface{}, err error) {
 	return
 }
 
-// 设置参与验证的数据
+// 设置参与验证的数据（值会同步到对应的json标签属性上）
 func (v *Validator) SetDatas(datas map[string]interface{}) (err error) {
 	err = v.GetError()
 	if err != nil {
@@ -524,7 +524,7 @@ func (v *Validator) SetDatas(datas map[string]interface{}) (err error) {
 	return
 }
 
-// 设置数据
+// 设置数据（值会同步到对应的json标签属性上）
 func (v *Validator) SetData(key string, value interface{}) (err error) {
 	err = v.GetError()
 	if err != nil {
@@ -748,8 +748,7 @@ func (v *Validator) handleCheck() (err error) {
 			dataTitle = dataKey
 		}
 		// 定义的规则字符串
-		dataRuleStr, isStr := dataRules.(string)
-		if isStr {
+		if dataRuleStr, isStr := dataRules.(string); isStr {
 			if dataRuleStr == "" {
 				continue
 			}
@@ -811,6 +810,12 @@ func (v *Validator) handleCheck() (err error) {
 		return
 	}
 	err = v.callValidatorInstanceHandleDatasMethod(datas, scene)
+	if err != nil {
+		return
+	}
+
+	// 设置验证后的数据
+	err = v.SetDatas(datas)
 	if err != nil {
 		return
 	}

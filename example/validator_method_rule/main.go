@@ -28,9 +28,12 @@ func (u *UserLogin) DefineTitles() map[string]string {
 }
 
 // 验证器定义的验证规则
-// 要为值接收者方法，才能被父结构体反射执行匹配到
 // 首字母需大写，为导出方法
-func (u UserLogin) IsCaptcha(value interface{}, param string, datas map[string]interface{}, title string) error {
+// 参数需定义为：value interface{}，param string，datas map[string]interface{}，title string
+// 参数分别表示：验证的值，验证规则参数，验证数据，验证字段标题
+// 返回值需定义为：error
+// 返回值表示验证结果，nil表示验证通过，否则表示验证不通过
+func (u *UserLogin) IsCaptcha(value interface{}, param string, datas map[string]interface{}, title string) error {
 	if value != "1234" {
 		return errors.New(title + "只能为1234")
 	}
@@ -51,4 +54,6 @@ func main() {
 	} else {
 		fmt.Println("登录验证通过")
 	}
+
+	fmt.Println(123, userLogin.Datas)
 }

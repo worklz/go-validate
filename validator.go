@@ -21,8 +21,12 @@ type ValidatorInterface interface {
 	DefineScenes() map[string][]string
 	GetScenes() (scenes map[string][]string, err error)
 	SetScenes(scenes map[string][]string) (err error)
+	GetDatas() (datas map[string]interface{}, err error)
+	SetDatas(datas map[string]interface{}) (err error)
 	Check() error
-	HandleData(scene string) error
+	CheckScene(scene string) error
+	GetScene() (scene string, err error)
+	HandleDatas(datas map[string]interface{}, scene string) error
 }
 
 type Validator struct {
@@ -31,12 +35,14 @@ type Validator struct {
 	Titles          map[string]string      // 验证字段标题
 	Scenes          map[string][]string    // 验证场景
 	Datas           map[string]interface{} // 验证数据
+	Scene           string                 // 当前验证场景
 	CheckRules      map[string]interface{} // 当前验证规则
 	SystemErrPrefix string                 // 系统错误前缀
 	Err             error                  // 错误
 
-	validatorInstance      ValidatorInterface // 验证器实例
-	validatorInstanceValue reflect.Value      //验证器实例反射值
+	validatorInstance          ValidatorInterface // 验证器实例
+	validatorInstancePtrValue  reflect.Value      // 验证器实例结构体指针的反射值
+	validatorInstanceElemValue reflect.Value      // 验证器实例结构体本身的反射值
 }
 
 // 设置验证器实例
@@ -49,8 +55,10 @@ func (v *Validator) SetValidatorInstance(validator ValidatorInterface) {
 	if validatorInstanceValue.Kind() != reflect.Ptr || validatorInstanceValue.IsNil() {
 		v.SetSystemError("未通过正确方法实例当前验证器！")
 	} else {
-		// 获取指针指向的实际对象的反射值
-		v.validatorInstanceValue = validatorInstanceValue.Elem()
+		// 验证器实例结构体指针的反射值
+		v.validatorInstancePtrValue = validatorInstanceValue
+		// 验证器实例结构体本身的反射值
+		v.validatorInstanceElemValue = validatorInstanceValue.Elem()
 	}
 
 	// 设置定义的属性
@@ -71,10 +79,10 @@ func (v *Validator) setDatasByJsonTag() (err error) {
 	datas := make(map[string]interface{})
 
 	// 获取结构体的类型
-	typeOf := v.validatorInstanceValue.Type()
+	typeOf := v.validatorInstanceElemValue.Type()
 	// 遍历结构体的所有字段
-	for i := 0; i < v.validatorInstanceValue.NumField(); i++ {
-		field := v.validatorInstanceValue.Field(i)
+	for i := 0; i < v.validatorInstanceElemValue.NumField(); i++ {
+		field := v.validatorInstanceElemValue.Field(i)
 		typeField := typeOf.Field(i)
 		// 获取 JSON 标签
 		jsonTag := typeField.Tag.Get("json")
@@ -100,7 +108,7 @@ func (v *Validator) setValidatorInstanceAttr(attr string, value interface{}) (er
 		return
 	}
 	// 尝试获取指定名称的字段
-	attrField := v.validatorInstanceValue.FieldByName(attr)
+	attrField := v.validatorInstanceElemValue.FieldByName(attr)
 	// 检查字段是否有效且可设置
 	if !attrField.IsValid() || !attrField.CanSet() {
 		err = v.SetSystemError(fmt.Sprintf("属性[%s]不可设置", attr))
@@ -132,7 +140,7 @@ func (v *Validator) getValidatorInstanceAttr(attr string) (res interface{}, err 
 		}
 	}
 	// 尝试获取指定名称的字段
-	attrValue := v.validatorInstanceValue.FieldByName(attr)
+	attrValue := v.validatorInstanceElemValue.FieldByName(attr)
 	// 检查字段是否有效
 	if !attrValue.IsValid() {
 		err = v.SetSystemError(fmt.Sprintf("属性[%s]无效", attr))
@@ -430,7 +438,20 @@ func (v *Validator) SetScenes(scenes map[string][]string) (err error) {
 	return
 }
 
-// 获取验证数据
+// 获取当前验证场景
+func (v *Validator) GetScene() (scene string, err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	scene, err = v.getValidatorInstanceStrAttr("Scene")
+	if err != nil {
+		return
+	}
+	return
+}
+
+// 获取参与验证的数据
 func (v *Validator) GetDatas() (datas map[string]interface{}, err error) {
 	err = v.GetError()
 	if err != nil {
@@ -448,13 +469,13 @@ func (v *Validator) GetDatas() (datas map[string]interface{}, err error) {
 	return
 }
 
-// 设置验证数据
+// 设置参与验证的数据
 func (v *Validator) SetDatas(datas map[string]interface{}) (err error) {
-	if datas == nil {
-		return
-	}
 	err = v.GetError()
 	if err != nil {
+		return
+	}
+	if datas == nil {
 		return
 	}
 	err = v.setValidatorInstanceAttr("Datas", datas)
@@ -464,9 +485,9 @@ func (v *Validator) SetDatas(datas map[string]interface{}) (err error) {
 
 	// 判断属性json标签，并赋值
 	// 获取结构体的类型
-	t := v.validatorInstanceValue.Type()
+	t := v.validatorInstanceElemValue.Type()
 	// 遍历结构体的所有字段
-	for i := 0; i < v.validatorInstanceValue.NumField(); i++ {
+	for i := 0; i < v.validatorInstanceElemValue.NumField(); i++ {
 		field := t.Field(i)
 		// 获取 JSON 标签
 		jsonTag := field.Tag.Get("json")
@@ -482,7 +503,7 @@ func (v *Validator) SetDatas(datas map[string]interface{}) (err error) {
 			continue
 		}
 		// 获取字段的值
-		structField := v.validatorInstanceValue.Field(i)
+		structField := v.validatorInstanceElemValue.Field(i)
 		// 检查字段是否可设置
 		if structField.CanSet() {
 			// 将传入的值转换为反射值
@@ -493,6 +514,28 @@ func (v *Validator) SetDatas(datas map[string]interface{}) (err error) {
 				structField.Set(val)
 			}
 		}
+	}
+
+	return
+}
+
+// 设置数据
+func (v *Validator) SetData(key string, value interface{}) (err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	if key == "" {
+		return
+	}
+	datas, err := v.GetDatas()
+	if err != nil {
+		return
+	}
+	datas[key] = value
+	err = v.SetDatas(datas)
+	if err != nil {
+		return
 	}
 
 	return
@@ -544,6 +587,10 @@ func (v *Validator) initAttr(scene string) (err error) {
 	} else {
 		checkRules = rules
 	}
+	err = v.setValidatorInstanceAttr("Scene", scene)
+	if err != nil {
+		return
+	}
 	err = v.setValidatorInstanceAttr("CheckRules", checkRules)
 	if err != nil {
 		return
@@ -594,59 +641,68 @@ func (v *Validator) getCheckRules() (rules map[string]interface{}, err error) {
 }
 
 // 调用验证器实例的规则方法
-// paramTypes 参数类型
-// returnTypes 返回值类型
-// params 参数
-func (v *Validator) callValidatorInstanceRuleMethod(methodName string, paramTypes []reflect.Type, returnTypes []reflect.Type, params []interface{}) (err error) {
+func (v *Validator) callValidatorInstanceRuleMethod(methodName string, dataValue interface{}, ruleParam string, datas map[string]interface{}, dataTitle string) (err error) {
 	err = v.GetError()
 	if err != nil {
 		return
 	}
 	// 获取指定名称的方法
-	method := v.validatorInstanceValue.MethodByName(methodName)
+	// 反射值为指针类型，指针可以调用值接收者方法和指针接收者方法
+	method := v.validatorInstancePtrValue.MethodByName(methodName)
 	// 判断方法是否有效
-	if !method.IsValid() {
+	if !method.IsValid() || !method.CanInterface() {
 		err = v.SetSystemError(fmt.Sprintf("方法%s不可调用", methodName))
 		return
 	}
 
 	// 检查参数数量(有一个是接收者)
-	methodParamNum := method.Type().NumIn() - 1
-	if methodParamNum != len(paramTypes) {
-		err = v.SetSystemError(fmt.Sprintf("方法%s需要%d个参数，实际提供了%d个", methodName, methodParamNum, len(paramTypes)))
+	methodParamNum := method.Type().NumIn()
+	if methodParamNum != 4 {
+		err = v.SetSystemError(fmt.Sprintf("方法%s需定义4个参数，但实际有%d个参数", methodName, methodParamNum))
 		return
 	}
-
 	// 检查参数类型
-	for i, param := range paramTypes {
-		methodParamType := method.Type().In(i + 1)
-		paramType := reflect.TypeOf(param)
-		if !paramType.AssignableTo(methodParamType) {
-			err = v.SetSystemError(fmt.Sprintf("方法%s的第%d个参数类型不正确，预期为%s，实际为%s", methodName, i+1, paramType, methodParamType))
-			return
-		}
+	no1MethodParamType := method.Type().In(0)
+	if no1MethodParamType.Kind() != reflect.Interface || no1MethodParamType.NumMethod() != 0 {
+		err = v.SetSystemError(fmt.Sprintf("方法%s的第1个参数类型不正确，需为interface{}", methodName))
+		return
+	}
+	no2MethodParamType := method.Type().In(1)
+	if no2MethodParamType.Kind() != reflect.String {
+		err = v.SetSystemError(fmt.Sprintf("方法%s的第2个参数类型不正确，需为string", methodName))
+		return
+	}
+	no3MethodParamType := method.Type().In(2)
+	if no3MethodParamType.Kind() != reflect.Map || no3MethodParamType.Key().Kind() != reflect.String || no3MethodParamType.Elem().Kind() != reflect.Interface {
+		err = v.SetSystemError(fmt.Sprintf("方法%s的第3个参数类型不正确，需为map[string]interface{}", methodName))
+		return
+	}
+	no4MethodParamType := method.Type().In(3)
+	if no4MethodParamType.Kind() != reflect.String {
+		err = v.SetSystemError(fmt.Sprintf("方法%s的第4个参数类型不正确，需为string", methodName))
+		return
 	}
 
 	// 检查返回值数量
 	methodRetuenNum := method.Type().NumOut()
-	if methodRetuenNum != len(returnTypes) {
-		err = v.SetSystemError(fmt.Sprintf("方法%s返回%d个值，但预期返回%d个", methodName, methodRetuenNum, len(returnTypes)))
+	if methodRetuenNum != 1 {
+		err = v.SetSystemError(fmt.Sprintf("方法%s只需返回1个错误结果，但实际有%d个变量返回", methodName, methodRetuenNum))
 		return
 	}
 
 	// 检查返回值类型
-	for i, returnType := range returnTypes {
-		methodReturnType := method.Type().Out(i)
-		if !returnType.AssignableTo(methodReturnType) {
-			err = v.SetSystemError(fmt.Sprintf("方法%s的第%d个返回值类型不正确，预期为%s，实际为%s", methodName, i+1, paramType, methodParamType))
-			return
-		}
+	no1MethodReturnType := method.Type().Out(0)
+	if no1MethodReturnType != reflect.TypeOf((*error)(nil)).Elem() {
+		err = v.SetSystemError(fmt.Sprintf("方法%s的返回值类型不正确，需为error", methodName))
+		return
 	}
 
 	// 准备反射调用所需的参数
-	var paramValues []reflect.Value
-	for _, param := range params {
-		paramValues = append(paramValues, reflect.ValueOf(param))
+	paramValues := []reflect.Value{
+		reflect.ValueOf(dataValue),
+		reflect.ValueOf(ruleParam),
+		reflect.ValueOf(datas),
+		reflect.ValueOf(dataTitle),
 	}
 
 	// 调用方法并获取返回值
@@ -724,7 +780,7 @@ func (v *Validator) handleCheck() (err error) {
 					continue
 				}
 				// 判断是否为结构体内可调用方法
-				err = v.callValidatorInstanceRuleMethod(ruleName, []interface{}{dataValue, ruleParam, datas, dataTitle})
+				err = v.callValidatorInstanceRuleMethod(ruleName, dataValue, ruleParam, datas, dataTitle)
 				if err != nil {
 					return
 				}
@@ -744,11 +800,83 @@ func (v *Validator) handleCheck() (err error) {
 		return
 	}
 
+	// 验证后处理数据
+	scene, err := v.GetScene()
+	if err != nil {
+		return
+	}
+	err = v.callValidatorInstanceHandleDatasMethod(datas, scene)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+// 调用验证器实例的验证后处理数据方法
+func (v *Validator) callValidatorInstanceHandleDatasMethod(datas map[string]interface{}, scene string) (err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	methodName := "HandleDatas"
+	// 获取指定名称的方法
+	method := v.validatorInstancePtrValue.MethodByName(methodName)
+	// 判断方法是否有效
+	if !method.IsValid() || !method.CanInterface() {
+		err = v.SetSystemError(fmt.Sprintf("方法%s不可调用", methodName))
+		return
+	}
+
+	// 检查参数数量
+	methodParamNum := method.Type().NumIn()
+	if methodParamNum != 2 {
+		err = v.SetSystemError(fmt.Sprintf("方法%s需定义2个参数，但实际有%d个参数", methodName, methodParamNum))
+		return
+	}
+	// 检查参数类型
+	no1MethodParamType := method.Type().In(0)
+	if no1MethodParamType.Kind() != reflect.Map || no1MethodParamType.Key().Kind() != reflect.String || no1MethodParamType.Elem().Kind() != reflect.Interface {
+		err = v.SetSystemError(fmt.Sprintf("方法%s的第1个参数类型不正确，需为map[string]interface{}", methodName))
+		return
+	}
+	no2MethodParamType := method.Type().In(1)
+	if no2MethodParamType.Kind() != reflect.String {
+		err = v.SetSystemError(fmt.Sprintf("方法%s的第2个参数类型不正确，需为string", methodName))
+		return
+	}
+
+	// 检查返回值数量
+	methodRetuenNum := method.Type().NumOut()
+	if methodRetuenNum != 1 {
+		err = v.SetSystemError(fmt.Sprintf("方法%s只需返回1个错误结果，但实际有%d个变量返回", methodName, methodRetuenNum))
+		return
+	}
+
+	// 检查返回值类型
+	no1MethodReturnType := method.Type().Out(0)
+	if no1MethodReturnType != reflect.TypeOf((*error)(nil)).Elem() {
+		err = v.SetSystemError(fmt.Sprintf("方法%s的返回值类型不正确，需为error", methodName))
+		return
+	}
+
+	// 准备反射调用所需的参数
+	paramValues := []reflect.Value{
+		reflect.ValueOf(datas),
+		reflect.ValueOf(scene),
+	}
+
+	// 调用方法并获取返回值
+	results := method.Call(paramValues)
+	if len(results) > 0 {
+		if resErr, ok := results[0].Interface().(error); ok {
+			err = resErr
+		}
+	}
 	return
 }
 
 // 验证后处理数据
-// scene 当前验证场景
-func (v *Validator) HandleData(scene string) error {
+func (v *Validator) HandleDatas(datas map[string]interface{}, scene string) error {
 	return nil
 }

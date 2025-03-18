@@ -32,6 +32,12 @@ import "github.com/worklz/go-validate"
 
 以下为内置验证规则，可直接使用，更多规则请自行定义（参考上述：注册验证规则示例）。
 
+<style>
+    table td:nth-child(2), table th:nth-child(2) {
+        width: 50%;
+    }
+</style>
+
 | 规则 | 描述 | 使用示例 | 解释 | 注意 |
 | :-- | :---------------- | :--- | :---------------- | :---------------- |
 | required | 验证字段必须 | "name":"required" | 名称必填 | 如果验证规则没有添加required就表示空值，则不会进行后续规则验证 |

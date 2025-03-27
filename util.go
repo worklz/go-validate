@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // 预定义的正则表达式
@@ -219,6 +220,16 @@ func isTime(value string) bool {
 	return err == nil
 }
 
+// 字符串首字母大写
+func ucFirst(str string) string {
+	if len(str) == 0 {
+		return str
+	}
+	runes := []rune(str)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
+}
+
 // 验证时间范围
 func isTimeRange(value interface{}, rule string, title string) error {
 	valueMap, ok := value.(map[string]interface{})
@@ -234,14 +245,14 @@ func isTimeRange(value interface{}, rule string, title string) error {
 		return errors.New("验证规则[timeRange]的参数数据缺失")
 	}
 	checkFunc := map[string]func(string) bool{
-		"date":      isDate,
-		"datetime":  isDatetime,
-		"year":      isYear,
-		"yearMonth": isYearMonth,
-		"month":     isMonth,
-		"time":      isTime,
+		"Date":      isDate,
+		"Datetime":  isDatetime,
+		"Year":      isYear,
+		"YearMonth": isYearMonth,
+		"Month":     isMonth,
+		"Time":      isTime,
 	}
-	check, exists := checkFunc[rule]
+	check, exists := checkFunc[ucFirst(rule)]
 	if !exists {
 		return fmt.Errorf("验证规则[timeRange:%s]错误", rule)
 	}

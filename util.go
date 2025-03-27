@@ -271,3 +271,13 @@ func isTimeRange(value interface{}, rule string, title string) error {
 	}
 	return nil
 }
+
+// 字符串字符数，包含中文
+// 此方法直接遍历字符串，不会创建额外的大型数据结构，因此内存占用较小
+func strCharNum(s string) int {
+	num := 0
+	for range s {
+		num++
+	}
+	return num
+}

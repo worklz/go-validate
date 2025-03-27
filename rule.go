@@ -128,7 +128,7 @@ var Rules = map[string]Rule{
 			if param == "" {
 				return errors.New("验证规则[length]错误")
 			}
-			valLen := len(valStr)
+			valLen := strCharNum(valStr)
 			if !strings.Contains(param, ",") {
 				limitLen, err := strconv.Atoi(param)
 				if err != nil || !isPositiveInt(limitLen) {
@@ -165,7 +165,7 @@ var Rules = map[string]Rule{
 			if err != nil {
 				return errors.New("验证规则[min]参数错误")
 			}
-			valLen := len(valStr)
+			valLen := strCharNum(valStr)
 			if valLen < minLen {
 				return errors.New(title + fmt.Sprintf("限制最小长度%d", minLen))
 			}
@@ -183,7 +183,7 @@ var Rules = map[string]Rule{
 			if err != nil {
 				return errors.New("验证规则[max]参数错误")
 			}
-			valLen := len(valStr)
+			valLen := strCharNum(valStr)
 			if valLen > maxLen {
 				return errors.New(title + fmt.Sprintf("限制最大长度%d", maxLen))
 			}

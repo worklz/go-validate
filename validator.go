@@ -572,24 +572,20 @@ func (v *Validator) initAttr(scene string) (err error) {
 		if err != nil {
 			return
 		}
-		if scenes == nil {
-			err = v.SetSystemError("未定义验证场景数据！")
-			return
-		}
-		sceneDatas, ok := scenes[scene]
-		if !ok {
-			err = v.SetSystemError(fmt.Sprintf("未定义验证场景%s数据！", scene))
-			return
-		}
-		for _, dataKey := range sceneDatas {
-			dataRules, ok := rules[dataKey]
-			if !ok {
-				err = v.SetSystemError(fmt.Sprintf("验证场景%s数据%s未定义验证规则！", scene, dataKey))
-				return
+		if scenes != nil {
+			if sceneDatas, ok := scenes[scene]; ok {
+				for _, dataKey := range sceneDatas {
+					dataRules, ok := rules[dataKey]
+					if !ok {
+						err = v.SetSystemError(fmt.Sprintf("验证场景%s数据%s未定义验证规则！", scene, dataKey))
+						return
+					}
+					checkRules[dataKey] = dataRules
+				}
 			}
-			checkRules[dataKey] = dataRules
 		}
-	} else {
+	}
+	if len(checkRules) == 0 {
 		checkRules = rules
 	}
 	err = v.setValidatorInstanceAttr("Scene", scene)

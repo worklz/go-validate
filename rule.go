@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -817,6 +818,21 @@ var Rules = map[string]Rule{
 			if !uriRegex.MatchString(str) {
 				return errors.New(title + "地址格式错误")
 			}
+			return nil
+		},
+	},
+	"json": {
+		Name: "json",
+		Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {
+			str, ok := value.(string)
+			if !ok {
+				return errors.New(title + "格式错误")
+			}
+			var js interface{}
+			if json.Unmarshal([]byte(str), &js) != nil {
+				return errors.New(title + "需为json类型字符串")
+			}
+			js = nil
 			return nil
 		},
 	},

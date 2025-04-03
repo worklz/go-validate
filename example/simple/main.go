@@ -15,7 +15,7 @@ type UserLogin struct {
 
 func (u *UserLogin) DefineRules() map[string]interface{} {
 	return map[string]interface{}{
-		"username": "required",
+		"username": "required|json",
 		"password": "required",
 		"captcha":  "required",
 	}
@@ -37,7 +37,7 @@ func (u *UserLogin) DefineTitles() map[string]string {
 }
 
 func main() {
-	userLogin := &UserLogin{Username: "admin", Password: "123456"}
+	userLogin := &UserLogin{Username: "admin", Password: "123456", Captcha: "1234"}
 	validate.Create(userLogin)
 	err := userLogin.Check()
 	if err != nil {

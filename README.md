@@ -84,3 +84,4 @@ import "github.com/worklz/go-validate"
 | urls | 验证字段必须为包含合法URL地址的数组 | "imageUrls":"urls" | 图片链接列表中的每个链接都必须是合法的URL格式 | 验证的值必须是数组类型，数组中的每个元素必须是字符串类型，否则判定为格式错误 |
 | ip | 验证字段必须为合法的IP地址 | "serverIp":"ip" | 服务器IP地址必须是合法的IP格式 | 验证的值必须是字符串类型，否则判定为格式错误 |
 | uri | 验证字段必须为合法的URI地址 | "resourceUri":"uri" | 资源的URI地址必须是合法的URI格式 | 验证的值必须是字符串类型，否则判定为格式错误 |
+| json | 验证字段必须为合法的JSON字符串格式 | "json":"json" | JSON格式必须是合法的JSON字符串格式 | 验证的值必须是json字符串类型，否则判定为格式错误 |

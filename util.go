@@ -3,6 +3,7 @@ package validate
 import (
 	"errors"
 	"fmt"
+	"math"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -92,6 +93,10 @@ func isPositiveInt(value interface{}) bool {
 	if num, ok := value.(int); ok {
 		return num > 0
 	}
+	// json转换为map[string]any后，如："age":18，age类型会转换为float64
+	if num, ok := value.(float64); ok {
+		return num > 0 && math.Floor(num) == num
+	}
 	if str, ok := value.(string); ok {
 		num, err := strconv.Atoi(str)
 		return err == nil && num > 0
@@ -103,6 +108,10 @@ func isPositiveInt(value interface{}) bool {
 func isNonnegativeInt(value interface{}) bool {
 	if num, ok := value.(int); ok {
 		return num >= 0
+	}
+	// json转换为map[string]any后，如："age":18，age类型会转换为float64
+	if num, ok := value.(float64); ok {
+		return num >= 0 && math.Floor(num) == num
 	}
 	if str, ok := value.(string); ok {
 		num, err := strconv.Atoi(str)

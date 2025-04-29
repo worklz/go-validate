@@ -67,7 +67,8 @@ import "github.com/worklz/go-validate"
 | chs | 验证字段只能是汉字 | "name":"chs" | name 字段只能是汉字 | 字段值需为纯汉字字符串 |
 | chsAlphaNum | 验证字段只能是汉字、字母、数字 | "username":"chsAlphaNum" | username 字段只能是汉字、字母、数字 | 字段值需由汉字、字母、数字组成 |
 | chsDash | 验证字段只能是汉字、字母、数字、下划线_、破折号 - | "code":"chsDash" | code 字段只能是汉字、字母、数字、下划线_、破折号 - | 字段值需由指定字符组成 |
-| chsDashSpace | 验证字段只能是汉字、字母、数字、下划线_、短横线 - 及空格组合 | "address":"chsDashSpace" | address 字段只能是汉字、字母、数字、下划线_、短横线 - 及空格组合 | 字段值需由指定字符和空格组成 |
+| chsDashSpace | 验证字段只能是汉字、字母、数字、下划线_、短横线 - 及空格组合 | "address":"chsDashSpace" | address 字段只能是汉字、字母、数字、下划线_、短横线 - 及空格组合 | 字段值需由指定字符或空格组成 |
+| chsDashChar | 验证字段只能是汉字、字母、数字、下划线_、短横线 - 及中文符号组合 | "name":"chsDashChar" | name 字段只能是汉字、字母、数字、下划线_、短横线 -及中文符号组合 | 字段值需由指定字符或中文符号组成 |
 | alphaNum | 验证字段只能是字母、数字 | "password":"alphaNum" | password 字段只能是字母、数字 | 字段值需由字母、数字组成 |
 | alphaDash | 验证字段只能是字母、数字、下划线_、短横线 - | "slug":"alphaDash" | slug 字段只能是字母、数字、下划线_、短横线 - | 字段值需由指定字符组成 |
 | hexColor | 验证字段必须为十六进制颜色格式 | "color":"hexColor" | color 字段必须为十六进制颜色格式 | 字段值需为符合十六进制颜色格式的字符串 |

@@ -367,7 +367,7 @@ var Rules = map[string]Rule{
 	"array": {
 		Name: "array",
 		Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {
-			if _, ok := value.([]interface{}); !ok {
+			if _, ok := isSlice(value); !ok {
 				return errors.New(title + "错误")
 			}
 			return nil
@@ -376,48 +376,50 @@ var Rules = map[string]Rule{
 	"arrayIn": {
 		Name: "arrayIn",
 		Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {
-			if arr, ok := value.([]interface{}); ok {
-				if len(arr) == 0 {
-					return errors.New(title + "不能为空")
-				}
-				if param == "" {
-					return errors.New("验证规则[arrayIn]错误")
-				}
-				ruleArr := strings.Split(param, ",")
-				if !arrayIn(arr, ruleArr) {
-					return errors.New(title + "错误")
-				}
-				return nil
+			arr, ok := isSlice(value)
+			if !ok {
+				return errors.New(title + "类型错误")
 			}
-			return errors.New(title + "错误")
+			if len(arr) == 0 {
+				return errors.New(title + "不能为空")
+			}
+			if param == "" {
+				return errors.New("验证规则[arrayIn]错误")
+			}
+			ruleArr := strings.Split(param, ",")
+			if !arrayIn(arr, ruleArr) {
+				return errors.New(title + "错误")
+			}
+			return nil
 		},
 	},
 	"arrayEmptyOrIn": {
 		Name: "arrayEmptyOrIn",
 		Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {
-			if arr, ok := value.([]interface{}); ok {
-				if len(arr) == 0 {
-					return nil
-				}
-				if param == "" || !strings.Contains(param, ",") {
-					return errors.New("验证规则[arrayEmptyOrIn]错误")
-				}
-				ruleArr := strings.Split(param, ",")
-				if !arrayIn(arr, ruleArr) {
-					return errors.New(title + "错误")
-				}
+			arr, ok := isSlice(value)
+			if !ok {
+				return errors.New(title + "类型错误")
+			}
+			if len(arr) == 0 {
 				return nil
 			}
-			return errors.New(title + "格式错误")
+			if param == "" || !strings.Contains(param, ",") {
+				return errors.New("验证规则[arrayEmptyOrIn]错误")
+			}
+			ruleArr := strings.Split(param, ",")
+			if !arrayIn(arr, ruleArr) {
+				return errors.New(title + "错误")
+			}
+			return nil
 		},
 	},
 	"arrayPositiveInt": {
 		Name: "arrayPositiveInt",
 		Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {
-			if !isArray(value) {
-				return errors.New(title + "格式错误")
+			arr, ok := isSlice(value)
+			if !ok {
+				return errors.New(title + "类型错误")
 			}
-			arr, ok := value.([]interface{})
 			if !ok || len(arr) == 0 {
 				return errors.New(title + "不能为空")
 			}
@@ -430,10 +432,10 @@ var Rules = map[string]Rule{
 	"arrayEmptyOrPositiveInt": {
 		Name: "arrayEmptyOrPositiveInt",
 		Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {
-			if !isArray(value) {
-				return errors.New(title + "格式错误")
+			arr, ok := isSlice(value)
+			if !ok {
+				return errors.New(title + "类型错误")
 			}
-			arr, ok := value.([]interface{})
 			if ok && len(arr) == 0 {
 				return nil
 			}
@@ -494,11 +496,11 @@ var Rules = map[string]Rule{
 	"arrayItemHas": {
 		Name: "arrayItemHas",
 		Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {
-			if !isArray(value) {
-				return errors.New(title + "格式错误")
+			arr, ok := isSlice(value)
+			if !ok {
+				return errors.New(title + "类型错误")
 			}
-			arr, ok := value.([]interface{})
-			if !ok || len(arr) == 0 {
+			if len(arr) == 0 {
 				return errors.New(title + "不能为空")
 			}
 			if param == "" {
@@ -527,11 +529,11 @@ var Rules = map[string]Rule{
 	"arrayEmptyOrItemHas": {
 		Name: "arrayEmptyOrItemHas",
 		Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {
-			if !isArray(value) {
-				return errors.New(title + "格式错误")
+			arr, ok := isSlice(value)
+			if !ok {
+				return errors.New(title + "类型错误")
 			}
-			arr, ok := value.([]interface{})
-			if ok && len(arr) == 0 {
+			if len(arr) == 0 {
 				return nil
 			}
 			if param == "" {
@@ -790,9 +792,9 @@ var Rules = map[string]Rule{
 	"urls": {
 		Name: "urls",
 		Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {
-			arr, ok := value.([]interface{})
+			arr, ok := isSlice(value)
 			if !ok {
-				return errors.New(title + "格式错误")
+				return errors.New(title + "类型错误")
 			}
 			for i, v := range arr {
 				str, ok := v.(string)

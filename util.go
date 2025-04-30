@@ -174,11 +174,6 @@ func arrayDiff(a, b []string) []string {
 	return diff
 }
 
-// 判断值是否为数组
-func isArray(value interface{}) bool {
-	return reflect.ValueOf(value).Kind() == reflect.Slice
-}
-
 // 判断数组元素是否为正整数
 func isPositiveIntArray(value []interface{}) bool {
 	for _, v := range value {
@@ -290,4 +285,21 @@ func strCharNum(s string) int {
 		num++
 	}
 	return num
+}
+
+// 判断是否为 slice
+func isSlice(value interface{}) (newSlice []interface{}, ok bool) {
+	v := reflect.ValueOf(value)
+	// 检查是否为切片
+	ok = v.Kind() == reflect.Slice
+	if !ok {
+		return
+	}
+	// 创建 []interface{} 切片
+	newSlice = make([]interface{}, v.Len())
+	// 遍历切片元素并转换
+	for i := 0; i < v.Len(); i++ {
+		newSlice[i] = v.Index(i).Interface()
+	}
+	return
 }

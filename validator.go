@@ -282,6 +282,9 @@ func (v *Validator) SetRules(rules map[string]interface{}) (err error) {
 		return
 	}
 	allRules := v.validatorInstance.DefineRules()
+	if allRules == nil {
+		allRules = map[string]interface{}{}
+	}
 	for k, v := range rules {
 		allRules[k] = v
 	}
@@ -350,6 +353,9 @@ func (v *Validator) SetMessages(messages map[string]string) (err error) {
 		return
 	}
 	allMessages := v.validatorInstance.DefineMessages()
+	if allMessages == nil {
+		allMessages = map[string]string{}
+	}
 	for k, v := range messages {
 		allMessages[k] = v
 	}
@@ -417,6 +423,9 @@ func (v *Validator) SetTitles(titles map[string]string) (err error) {
 		return
 	}
 	allTitles := v.validatorInstance.DefineTitles()
+	if allTitles == nil {
+		allTitles = map[string]string{}
+	}
 	for k, v := range titles {
 		allTitles[k] = v
 	}
@@ -497,6 +506,9 @@ func (v *Validator) SetScenes(scenes map[string][]string) (err error) {
 		return
 	}
 	allScenes := v.validatorInstance.DefineScenes()
+	if allScenes == nil {
+		allScenes = map[string][]string{}
+	}
 	for k, v := range scenes {
 		allScenes[k] = v
 	}

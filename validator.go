@@ -11,16 +11,20 @@ type ValidatorInterface interface {
 	SetValidatorInstance(validator ValidatorInterface)
 	DefineRules() map[string]interface{}
 	GetRules() (rules map[string]interface{}, err error)
-	SetRules(rules map[string]interface{}) (err error)
+	SetRules(rules map[string]interface{}) (err error)    // 设置验证规则
+	AppendRules(rules map[string]interface{}) (err error) // 追加验证规则
 	DefineMessages() map[string]string
 	GetMessages() (messages map[string]string, err error)
-	SetMessages(messages map[string]string) (err error)
+	SetMessages(messages map[string]string) (err error)    // 设置验证提示信息
+	AppendMessages(messages map[string]string) (err error) // 追加验证提示信息
 	DefineTitles() map[string]string
 	GetTitles() (titles map[string]string, err error)
-	SetTitles(titles map[string]string) (err error)
+	SetTitles(titles map[string]string) (err error)    // 设置验证字段标题
+	AppendTitles(titles map[string]string) (err error) // 追加验证字段标题
 	DefineScenes() map[string][]string
 	GetScenes() (scenes map[string][]string, err error)
-	SetScenes(scenes map[string][]string) (err error)
+	SetScenes(scenes map[string][]string) (err error)    // 设置验证场景
+	AppendScenes(scenes map[string][]string) (err error) // 追加验证场景
 	GetDatas() (datas map[string]interface{}, err error)
 	SetDatas(datas map[string]interface{}) (err error)
 	Check() error
@@ -273,11 +277,28 @@ func (v *Validator) GetRules() (rules map[string]interface{}, err error) {
 
 // 设置验证规则
 func (v *Validator) SetRules(rules map[string]interface{}) (err error) {
-	if rules == nil {
-		return
-	}
 	err = v.GetError()
 	if err != nil {
+		return
+	}
+	allRules := v.validatorInstance.DefineRules()
+	for k, v := range rules {
+		allRules[k] = v
+	}
+	err = v.setValidatorInstanceAttr("Rules", allRules)
+	if err != nil {
+		err = v.SetSystemError(err)
+	}
+	return
+}
+
+// 追加验证规则
+func (v *Validator) AppendRules(rules map[string]interface{}) (err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	if rules == nil {
 		return
 	}
 
@@ -324,11 +345,28 @@ func (v *Validator) GetMessages() (messages map[string]string, err error) {
 
 // 设置验证提示信息
 func (v *Validator) SetMessages(messages map[string]string) (err error) {
-	if messages == nil {
-		return
-	}
 	err = v.GetError()
 	if err != nil {
+		return
+	}
+	allMessages := v.validatorInstance.DefineMessages()
+	for k, v := range messages {
+		allMessages[k] = v
+	}
+	err = v.setValidatorInstanceAttr("Messages", allMessages)
+	if err != nil {
+		err = v.SetSystemError(err)
+	}
+	return
+}
+
+// 追加验证提示信息
+func (v *Validator) AppendMessages(messages map[string]string) (err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	if messages == nil {
 		return
 	}
 
@@ -374,11 +412,28 @@ func (v *Validator) GetTitles() (titles map[string]string, err error) {
 
 // 设置验证字段标题
 func (v *Validator) SetTitles(titles map[string]string) (err error) {
-	if titles == nil {
-		return
-	}
 	err = v.GetError()
 	if err != nil {
+		return
+	}
+	allTitles := v.validatorInstance.DefineTitles()
+	for k, v := range titles {
+		allTitles[k] = v
+	}
+	err = v.setValidatorInstanceAttr("Titles", allTitles)
+	if err != nil {
+		err = v.SetSystemError(err)
+	}
+	return
+}
+
+// 追加验证字段标题
+func (v *Validator) AppendTitles(titles map[string]string) (err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	if titles == nil {
 		return
 	}
 
@@ -422,22 +477,6 @@ func (v *Validator) GetScenes() (scenes map[string][]string, err error) {
 	return
 }
 
-// 设置验证场景
-func (v *Validator) SetScenes(scenes map[string][]string) (err error) {
-	if scenes == nil {
-		return
-	}
-	err = v.GetError()
-	if err != nil {
-		return
-	}
-	err = v.setValidatorInstanceAttr("Scenes", scenes)
-	if err != nil {
-		err = v.SetSystemError(err)
-	}
-	return
-}
-
 // 获取当前验证场景
 func (v *Validator) GetScene() (scene string, err error) {
 	err = v.GetError()
@@ -447,6 +486,50 @@ func (v *Validator) GetScene() (scene string, err error) {
 	scene, err = v.getValidatorInstanceStrAttr("Scene")
 	if err != nil {
 		return
+	}
+	return
+}
+
+// 设置验证场景
+func (v *Validator) SetScenes(scenes map[string][]string) (err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	allScenes := v.validatorInstance.DefineScenes()
+	for k, v := range scenes {
+		allScenes[k] = v
+	}
+	err = v.setValidatorInstanceAttr("Scenes", allScenes)
+	if err != nil {
+		err = v.SetSystemError(err)
+	}
+	return
+}
+
+// 追加验证场景
+func (v *Validator) AppendScenes(scenes map[string][]string) (err error) {
+	err = v.GetError()
+	if err != nil {
+		return
+	}
+	if scenes == nil {
+		return
+	}
+
+	currScenes, err := v.GetScenes()
+	if err != nil {
+		return
+	}
+	if currScenes == nil {
+		currScenes = map[string][]string{}
+	}
+	for k, v := range scenes {
+		currScenes[k] = v
+	}
+	err = v.setValidatorInstanceAttr("Scenes", currScenes)
+	if err != nil {
+		err = v.SetSystemError(err)
 	}
 	return
 }

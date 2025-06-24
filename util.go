@@ -94,7 +94,37 @@ func isPositiveInt(value interface{}) bool {
 	if num, ok := value.(int); ok {
 		return num > 0
 	}
-	// json转换为map[string]any后，如："age":18，age类型会转换为float64
+	if num, ok := value.(int8); ok {
+		return num > 0
+	}
+	if num, ok := value.(int16); ok {
+		return num > 0
+	}
+	if num, ok := value.(int32); ok {
+		return num > 0
+	}
+	if num, ok := value.(int64); ok {
+		return num > 0
+	}
+	if num, ok := value.(uint); ok {
+		return num > 0
+	}
+	if num, ok := value.(uint8); ok {
+		return num > 0
+	}
+	if num, ok := value.(uint16); ok {
+		return num > 0
+	}
+	if num, ok := value.(uint32); ok {
+		return num > 0
+	}
+	if num, ok := value.(uint64); ok {
+		return num > 0
+	}
+	if num, ok := value.(float32); ok {
+		numFloat64 := float64(num)
+		return numFloat64 > 0 && math.Floor(numFloat64) == numFloat64
+	}
 	if num, ok := value.(float64); ok {
 		return num > 0 && math.Floor(num) == num
 	}
@@ -110,7 +140,37 @@ func isNonnegativeInt(value interface{}) bool {
 	if num, ok := value.(int); ok {
 		return num >= 0
 	}
-	// json转换为map[string]any后，如："age":18，age类型会转换为float64
+	if num, ok := value.(int8); ok {
+		return num >= 0
+	}
+	if num, ok := value.(int16); ok {
+		return num >= 0
+	}
+	if num, ok := value.(int32); ok {
+		return num >= 0
+	}
+	if num, ok := value.(int64); ok {
+		return num >= 0
+	}
+	if _, ok := value.(uint); ok {
+		return true
+	}
+	if _, ok := value.(uint8); ok {
+		return true
+	}
+	if _, ok := value.(uint16); ok {
+		return true
+	}
+	if _, ok := value.(uint32); ok {
+		return true
+	}
+	if _, ok := value.(uint64); ok {
+		return true
+	}
+	if num, ok := value.(float32); ok {
+		numFloat64 := float64(num)
+		return numFloat64 >= 0 && math.Floor(numFloat64) == numFloat64
+	}
 	if num, ok := value.(float64); ok {
 		return num >= 0 && math.Floor(num) == num
 	}

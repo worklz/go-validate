@@ -67,6 +67,11 @@ func isEmpty(value interface{}) bool {
 	case reflect.String:
 		// 字符串类型，判断长度是否为 0
 		return v.Len() == 0
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128:
+		// 所有数值类型直接返回false
+		return false
 	case reflect.Array, reflect.Slice, reflect.Map:
 		// 数组、切片、映射类型，判断长度是否为 0
 		return v.Len() == 0

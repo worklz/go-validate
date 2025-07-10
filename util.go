@@ -50,6 +50,18 @@ func isEmpty(value interface{}) bool {
 	if !v.IsValid() {
 		return true
 	}
+
+	// 处理数值类型的0（修改点）
+	if v.Kind() >= reflect.Int && v.Kind() <= reflect.Int64 {
+		return v.Int() != 0
+	}
+	if v.Kind() >= reflect.Uint && v.Kind() <= reflect.Uint64 {
+		return v.Uint() != 0
+	}
+	if v.Kind() == reflect.Float32 || v.Kind() == reflect.Float64 {
+		return v.Float() != 0
+	}
+
 	// 根据不同的类型进行判断
 	switch v.Kind() {
 	case reflect.String:

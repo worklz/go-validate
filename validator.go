@@ -44,9 +44,9 @@ type Validator struct {
 	SystemErrPrefix string                 // 系统错误前缀
 	Err             error                  // 错误
 
-	validatorInstance          ValidatorInterface // 验证器实例
-	validatorInstancePtrValue  reflect.Value      // 验证器实例结构体指针的反射值
-	validatorInstanceElemValue reflect.Value      // 验证器实例结构体本身的反射值
+	validatorInstance     ValidatorInterface // 验证器实例
+	validatorInstancePtr  reflect.Value      // 验证器实例结构体指针的反射值
+	validatorInstanceElem reflect.Value      // 验证器实例结构体本身的反射值
 }
 
 // 设置验证器实例
@@ -57,12 +57,12 @@ func (v *Validator) SetValidatorInstance(validator ValidatorInterface) {
 	validatorInstanceValue := reflect.ValueOf(v.validatorInstance)
 	// 检查传入的是否为指针
 	if validatorInstanceValue.Kind() != reflect.Ptr || validatorInstanceValue.IsNil() {
-		v.SetSystemError("未通过正确方法实例当前验证器！")
+		v.SetSystemError("请传入验证器实例指针值！")
 	} else {
 		// 验证器实例结构体指针的反射值
-		v.validatorInstancePtrValue = validatorInstanceValue
+		v.validatorInstancePtr = validatorInstanceValue
 		// 验证器实例结构体本身的反射值
-		v.validatorInstanceElemValue = validatorInstanceValue.Elem()
+		v.validatorInstanceElem = validatorInstanceValue.Elem()
 	}
 
 	// 设置定义的属性
@@ -83,10 +83,10 @@ func (v *Validator) setDatasByJsonTag() (err error) {
 	datas := make(map[string]interface{})
 
 	// 获取结构体的类型
-	typeOf := v.validatorInstanceElemValue.Type()
+	typeOf := v.validatorInstanceElem.Type()
 	// 遍历结构体的所有字段
-	for i := 0; i < v.validatorInstanceElemValue.NumField(); i++ {
-		field := v.validatorInstanceElemValue.Field(i)
+	for i := 0; i < v.validatorInstanceElem.NumField(); i++ {
+		field := v.validatorInstanceElem.Field(i)
 		typeField := typeOf.Field(i)
 		// 获取 JSON 标签
 		jsonTag := typeField.Tag.Get("json")
@@ -101,75 +101,7 @@ func (v *Validator) setDatasByJsonTag() (err error) {
 	}
 
 	// 设置验证数据
-	err = v.setValidatorInstanceAttr("Datas", datas)
-	return
-}
-
-// 设置验证器实例属性
-func (v *Validator) setValidatorInstanceAttr(attr string, value interface{}) (err error) {
-	err = v.GetError()
-	if err != nil {
-		return
-	}
-	// 尝试获取指定名称的字段
-	attrField := v.validatorInstanceElemValue.FieldByName(attr)
-	// 检查字段是否有效且可设置
-	if !attrField.IsValid() || !attrField.CanSet() {
-		err = v.SetSystemError(fmt.Sprintf("属性[%s]不可设置", attr))
-		return
-	}
-	// 如果传入的值为nil，则设置为该类型的零值
-	if value == nil {
-		attrField.Set(reflect.Zero(attrField.Type()))
-		return
-	}
-	// 将传入的值转换为反射值
-	valueToSet := reflect.ValueOf(value)
-	// 检查值的类型是否匹配
-	if !valueToSet.Type().AssignableTo(attrField.Type()) {
-		err = v.SetSystemError(fmt.Sprintf("属性[%s]类型与传入值[%v]类型[%T]不一致", attr, value, value))
-		return
-	}
-	// 设置属性值
-	attrField.Set(valueToSet)
-	return
-}
-
-// 获取验证器实例属性
-func (v *Validator) getValidatorInstanceAttr(attr string) (res interface{}, err error) {
-	if attr != "Err" {
-		err = v.GetError()
-		if err != nil {
-			return
-		}
-	}
-	// 尝试获取指定名称的字段
-	attrValue := v.validatorInstanceElemValue.FieldByName(attr)
-	// 检查字段是否有效
-	if !attrValue.IsValid() {
-		err = v.SetSystemError(fmt.Sprintf("属性[%s]无效", attr))
-		return
-	}
-	// 返回属性值
-	res = attrValue.Interface()
-	return
-}
-
-// 获取验证器实例字符串属性
-func (v *Validator) getValidatorInstanceStrAttr(attr string) (res string, err error) {
-	err = v.GetError()
-	if err != nil {
-		return
-	}
-	attrValue, err := v.getValidatorInstanceAttr(attr)
-	if err != nil {
-		return
-	}
-	var ok bool
-	res, ok = attrValue.(string)
-	if !ok {
-		err = v.SetSystemError(attr + " 属性类型需为字符串形式")
-	}
+	v.Datas = datas
 	return
 }
 
@@ -179,25 +111,16 @@ func (v *Validator) getSystemErrPrefix() (prefix string, err error) {
 	if err != nil {
 		return
 	}
-	prefix, err = v.getValidatorInstanceStrAttr("SystemErrPrefix")
-	if err != nil {
-		return
+	if v.SystemErrPrefix == "" {
+		v.SystemErrPrefix = "验证器" + packageFullName(v.validatorInstance)
 	}
-	if prefix == "" {
-		prefix = "验证器" + packageFullName(v.validatorInstance)
-		err = v.setValidatorInstanceAttr("SystemErrPrefix", prefix)
-		if err != nil {
-			err = v.SetSystemError(err)
-		}
-	}
+	prefix = v.SystemErrPrefix
 	return
 }
 
 // 获取验证器错误
-func (v *Validator) GetError() (err error) {
-	value, _ := v.getValidatorInstanceAttr("Err")
-	err, _ = value.(error) // 不需要判断格式
-	return
+func (v *Validator) GetError() error {
+	return v.Err
 }
 
 // 获取系统错误
@@ -248,7 +171,7 @@ func (v *Validator) SetError(err interface{}) error {
 		resErrMsg = "未知错误！"
 	}
 	newErr := errors.New(resErrMsg)
-	v.setValidatorInstanceAttr("Err", newErr)
+	v.Err = newErr
 	return newErr
 }
 
@@ -263,15 +186,7 @@ func (v *Validator) GetRules() (rules map[string]interface{}, err error) {
 	if err != nil {
 		return
 	}
-	value, err := v.getValidatorInstanceAttr("Rules")
-	if err != nil {
-		return
-	}
-	var ok bool
-	rules, ok = value.(map[string]interface{})
-	if !ok {
-		err = v.SetSystemError("Rules 属性类型需为map[string]interface{}形式")
-	}
+	rules = v.Rules
 	return
 }
 
@@ -288,10 +203,7 @@ func (v *Validator) SetRules(rules map[string]interface{}) (err error) {
 	for k, v := range rules {
 		allRules[k] = v
 	}
-	err = v.setValidatorInstanceAttr("Rules", allRules)
-	if err != nil {
-		err = v.SetSystemError(err)
-	}
+	v.Rules = allRules
 	return
 }
 
@@ -315,11 +227,7 @@ func (v *Validator) AppendRules(rules map[string]interface{}) (err error) {
 	for k, v := range rules {
 		currRules[k] = v
 	}
-
-	err = v.setValidatorInstanceAttr("Rules", currRules)
-	if err != nil {
-		err = v.SetSystemError(err)
-	}
+	v.Rules = currRules
 	return
 }
 
@@ -334,15 +242,7 @@ func (v *Validator) GetMessages() (messages map[string]string, err error) {
 	if err != nil {
 		return
 	}
-	value, err := v.getValidatorInstanceAttr("Messages")
-	if err != nil {
-		return
-	}
-	var ok bool
-	messages, ok = value.(map[string]string)
-	if !ok {
-		err = v.SetSystemError("Messages 属性类型需为map[string]string形式")
-	}
+	messages = v.Messages
 	return
 }
 
@@ -359,10 +259,7 @@ func (v *Validator) SetMessages(messages map[string]string) (err error) {
 	for k, v := range messages {
 		allMessages[k] = v
 	}
-	err = v.setValidatorInstanceAttr("Messages", allMessages)
-	if err != nil {
-		err = v.SetSystemError(err)
-	}
+	v.Messages = allMessages
 	return
 }
 
@@ -386,10 +283,7 @@ func (v *Validator) AppendMessages(messages map[string]string) (err error) {
 	for k, v := range messages {
 		currMessages[k] = v
 	}
-	err = v.setValidatorInstanceAttr("Messages", currMessages)
-	if err != nil {
-		err = v.SetSystemError(err)
-	}
+	v.Messages = currMessages
 	return
 }
 
@@ -404,15 +298,7 @@ func (v *Validator) GetTitles() (titles map[string]string, err error) {
 	if err != nil {
 		return
 	}
-	value, err := v.getValidatorInstanceAttr("Titles")
-	if err != nil {
-		return
-	}
-	var ok bool
-	titles, ok = value.(map[string]string)
-	if !ok {
-		err = v.SetSystemError("Titles 属性类型需为map[string]string形式")
-	}
+	titles = v.Titles
 	return
 }
 
@@ -429,10 +315,7 @@ func (v *Validator) SetTitles(titles map[string]string) (err error) {
 	for k, v := range titles {
 		allTitles[k] = v
 	}
-	err = v.setValidatorInstanceAttr("Titles", allTitles)
-	if err != nil {
-		err = v.SetSystemError(err)
-	}
+	v.Titles = allTitles
 	return
 }
 
@@ -456,10 +339,7 @@ func (v *Validator) AppendTitles(titles map[string]string) (err error) {
 	for k, v := range titles {
 		currTitles[k] = v
 	}
-	err = v.setValidatorInstanceAttr("Titles", currTitles)
-	if err != nil {
-		err = v.SetSystemError(err)
-	}
+	v.Titles = currTitles
 	return
 }
 
@@ -474,15 +354,7 @@ func (v *Validator) GetScenes() (scenes map[string][]string, err error) {
 	if err != nil {
 		return
 	}
-	value, err := v.getValidatorInstanceAttr("Scenes")
-	if err != nil {
-		return
-	}
-	var ok bool
-	scenes, ok = value.(map[string][]string)
-	if !ok {
-		err = v.SetSystemError("Scenes 属性类型需为map[string][]string形式")
-	}
+	scenes = v.Scenes
 	return
 }
 
@@ -492,10 +364,7 @@ func (v *Validator) GetScene() (scene string, err error) {
 	if err != nil {
 		return
 	}
-	scene, err = v.getValidatorInstanceStrAttr("Scene")
-	if err != nil {
-		return
-	}
+	scene = v.Scene
 	return
 }
 
@@ -512,10 +381,7 @@ func (v *Validator) SetScenes(scenes map[string][]string) (err error) {
 	for k, v := range scenes {
 		allScenes[k] = v
 	}
-	err = v.setValidatorInstanceAttr("Scenes", allScenes)
-	if err != nil {
-		err = v.SetSystemError(err)
-	}
+	v.Scenes = allScenes
 	return
 }
 
@@ -539,10 +405,7 @@ func (v *Validator) AppendScenes(scenes map[string][]string) (err error) {
 	for k, v := range scenes {
 		currScenes[k] = v
 	}
-	err = v.setValidatorInstanceAttr("Scenes", currScenes)
-	if err != nil {
-		err = v.SetSystemError(err)
-	}
+	v.Scenes = currScenes
 	return
 }
 
@@ -552,15 +415,7 @@ func (v *Validator) GetDatas() (datas map[string]interface{}, err error) {
 	if err != nil {
 		return
 	}
-	value, err := v.getValidatorInstanceAttr("Datas")
-	if err != nil {
-		return
-	}
-	var ok bool
-	datas, ok = value.(map[string]interface{})
-	if !ok {
-		err = v.SetSystemError("Datas 属性类型需为map[string]interface{}形式")
-	}
+	datas = v.Datas
 	return
 }
 
@@ -573,16 +428,13 @@ func (v *Validator) SetDatas(datas map[string]interface{}) (err error) {
 	if datas == nil {
 		return
 	}
-	err = v.setValidatorInstanceAttr("Datas", datas)
-	if err != nil {
-		err = v.SetSystemError(err)
-	}
+	v.Datas = datas
 
 	// 判断属性json标签，并赋值
 	// 获取结构体的类型
-	t := v.validatorInstanceElemValue.Type()
+	t := v.validatorInstanceElem.Type()
 	// 遍历结构体的所有字段
-	for i := 0; i < v.validatorInstanceElemValue.NumField(); i++ {
+	for i := 0; i < v.validatorInstanceElem.NumField(); i++ {
 		field := t.Field(i)
 		// 获取 JSON 标签
 		jsonTag := field.Tag.Get("json")
@@ -598,7 +450,7 @@ func (v *Validator) SetDatas(datas map[string]interface{}) (err error) {
 			continue
 		}
 		// 获取字段的值
-		structField := v.validatorInstanceElemValue.Field(i)
+		structField := v.validatorInstanceElem.Field(i)
 		// 检查字段是否可设置
 		if structField.CanSet() {
 			// 将传入的值转换为反射值
@@ -651,10 +503,7 @@ func (v *Validator) initAttr(scene string) (err error) {
 		return
 	}
 	// 错误置空
-	err = v.setValidatorInstanceAttr("Err", nil)
-	if err != nil {
-		return
-	}
+	v.Err = nil
 	// 当前验证规则
 	checkRules := map[string]interface{}{}
 	rules, err := v.GetRules()
@@ -683,14 +532,8 @@ func (v *Validator) initAttr(scene string) (err error) {
 	if len(checkRules) == 0 {
 		checkRules = rules
 	}
-	err = v.setValidatorInstanceAttr("Scene", scene)
-	if err != nil {
-		return
-	}
-	err = v.setValidatorInstanceAttr("CheckRules", checkRules)
-	if err != nil {
-		return
-	}
+	v.Scene = scene
+	v.CheckRules = checkRules
 	return nil
 }
 
@@ -724,15 +567,7 @@ func (v *Validator) getCheckRules() (rules map[string]interface{}, err error) {
 	if err != nil {
 		return
 	}
-	value, err := v.getValidatorInstanceAttr("CheckRules")
-	if err != nil {
-		return
-	}
-	var ok bool
-	rules, ok = value.(map[string]interface{})
-	if !ok {
-		err = v.SetSystemError("CheckRules 属性类型需为map[string]interface{}形式")
-	}
+	rules = v.CheckRules
 	return
 }
 
@@ -744,7 +579,7 @@ func (v *Validator) callValidatorInstanceRuleMethod(methodName string, dataValue
 	}
 	// 获取指定名称的方法
 	// 反射值为指针类型，指针可以调用值接收者方法和指针接收者方法
-	method := v.validatorInstancePtrValue.MethodByName(methodName)
+	method := v.validatorInstancePtr.MethodByName(methodName)
 	// 判断方法是否有效
 	if !method.IsValid() || !method.CanInterface() {
 		err = v.SetSystemError(fmt.Sprintf("方法%s不可调用", methodName))
@@ -922,7 +757,7 @@ func (v *Validator) callValidatorInstanceHandleDatasMethod(datas map[string]inte
 	}
 	methodName := "HandleDatas"
 	// 获取指定名称的方法
-	method := v.validatorInstancePtrValue.MethodByName(methodName)
+	method := v.validatorInstancePtr.MethodByName(methodName)
 	// 判断方法是否有效
 	if !method.IsValid() || !method.CanInterface() {
 		err = v.SetSystemError(fmt.Sprintf("方法%s不可调用", methodName))

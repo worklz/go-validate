@@ -19,14 +19,14 @@ import "github.com/worklz/go-validate"
 
 ## 使用示例
 
-- [简单使用](https://github.com/worklz/go-validate/example/simple/main.go)
-- [验证场景](https://github.com/worklz/go-validate/example/scene/main.go)
-- [Map数据验证](https://github.com/worklz/go-validate/example/map/main.go)
-- [注册验证规则](https://github.com/worklz/go-validate/example/register_rule/main.go)
-- [验证器内方法定义为验证规则](https://github.com/worklz/go-validate/example/validator_method_rule/main.go)
-- [定义参数验证规则为闭包](https://github.com/worklz/go-validate/example/func_rule/main.go)
-- [验证后处理数据](https://github.com/worklz/go-validate/example/handle_datas/main.go)
-- [验证单个数据](https://github.com/worklz/go-validate/example/check_var/main.go)
+- [简单使用](https://github.com/worklz/go-validate/blob/main/example/simple/main.go)
+- [验证场景](https://github.com/worklz/go-validate/blob/main/example/scene/main.go)
+- [Map数据验证](https://github.com/worklz/go-validate/blob/main/example/map/main.go)
+- [注册验证规则](https://github.com/worklz/go-validate/blob/main/example/register_rule/main.go)
+- [验证器内方法定义为验证规则](https://github.com/worklz/go-validate/blob/main/example/validator_method_rule/main.go)
+- [定义参数验证规则为闭包](https://github.com/worklz/go-validate/blob/main/example/func_rule/main.go)
+- [验证后处理数据](https://github.com/worklz/go-validate/blob/main/example/handle_datas/main.go)
+- [验证单个数据](https://github.com/worklz/go-validate/blob/main/example/check_var/main.go)
 
 ## 验证规则
 

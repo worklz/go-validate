@@ -243,7 +243,17 @@ func arrayDiff(a, b []string) []string {
 // 判断数组元素是否为正整数
 func isPositiveIntArray(value []interface{}) bool {
 	for _, v := range value {
-		if num, ok := v.(int); !ok || num <= 0 {
+		if !isPositiveInt(v) {
+			return false
+		}
+	}
+	return true
+}
+
+// 判断数组元素是否为非负整数
+func isNonnegativeIntArray(value []interface{}) bool {
+	for _, v := range value {
+		if !isNonnegativeInt(v) {
 			return false
 		}
 	}

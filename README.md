@@ -58,6 +58,8 @@ import "github.com/worklz/go-validate"
 | arrayEmptyOrIn | 验证字段数组为空或数组中的元素必须在指定范围内 | "tags":"arrayEmptyOrIn:tag1,tag2" | 标签数组为空或标签必须为tag1或tag2 | 参数用逗号分隔 |
 | arrayPositiveInt | 验证字段必须为正整数数组 | "ids":"arrayPositiveInt" | ids 字段需为正整数数组 | 字段必须是数组且数组元素都为正整数，数组不能为空 |
 | arrayEmptyOrPositiveInt | 验证字段可以为空数组或正整数数组 | "ids":"arrayEmptyOrPositiveInt" | ids 字段可以为空数组或正整数数组 | 若字段为数组且不为空，则数组元素都需为正整数 |
+| arrayNonnegativeInt | 验证字段必须为非负正整数数组 | "ids":"arrayNonnegativeInt" | ids 字段需为非负正整数数组 | 字段必须是数组且数组元素都为非负正整数，数组不能为空 |
+| arrayEmptyOrNonnegativeInt | 验证字段可以为空数组或非负正整数数组 | "ids":"arrayEmptyOrNonnegativeInt" | ids 字段可以为空数组或非负正整数数组 | 若字段为数组且不为空，则数组元素都需为非负正整数 |
 | mapHas | 验证字段必须为包含特定键的非空 map | "info":"mapHas:key1,key2" | info 字段必须是包含 key1 和 key2 的非空 map | 验证规则参数需用逗号分隔，字段必须是 map 且包含规则指定的所有键 |
 | mapEmptyOrHas | 验证字段可以为空 map 或包含特定键的 map | "info":"mapEmptyOrHas:key1,key2" | info 字段可以为空 map 或包含 key1 和 key2 的 map | 若字段为非空 map，则必须包含规则指定的所有键，验证规则参数需用逗号分隔 |
 | arrayItemHas | 验证字段必须为非空数组，且数组每个元素都是包含特定键的非空 map | "list":"arrayItemHas:key1,key2" | list 字段必须是包含多个 map 的非空数组，每个 map 都要包含 key1 和 key2 | 验证规则参数需用逗号分隔，数组元素必须是 map 且包含规则指定的所有键，数组和 map 都不能为空 |

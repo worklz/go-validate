@@ -445,6 +445,38 @@ var Rules = map[string]Rule{
 			return nil
 		},
 	},
+	"arrayNonnegativeInt": {
+		Name: "arrayNonnegativeInt",
+		Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {
+			arr, ok := isSlice(value)
+			if !ok {
+				return errors.New(title + "类型错误")
+			}
+			if !ok || len(arr) == 0 {
+				return errors.New(title + "不能为空")
+			}
+			if !isNonnegativeIntArray(arr) {
+				return errors.New(title + "需为非负正整数数组")
+			}
+			return nil
+		},
+	},
+	"arrayEmptyOrNonnegativeInt": {
+		Name: "arrayEmptyOrNonnegativeInt",
+		Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {
+			arr, ok := isSlice(value)
+			if !ok {
+				return errors.New(title + "类型错误")
+			}
+			if ok && len(arr) == 0 {
+				return nil
+			}
+			if !isNonnegativeIntArray(arr) {
+				return errors.New(title + "需为非负正整数数组")
+			}
+			return nil
+		},
+	},
 	"mapHas": {
 		Name: "mapHas",
 		Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {

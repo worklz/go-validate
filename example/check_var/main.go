@@ -8,8 +8,8 @@ import (
 
 func main() {
 	// 定义变量标题
-	var1 := float64(0.0)
-	err := validate.CheckVar(var1, "required", "参数1", nil)
+	var1 := []float64{12.23}
+	err := validate.CheckVar(var1, "arrayEmptyOrNonnegativeInt", "参数1", nil)
 	if err != nil {
 		fmt.Printf("var1验证失败！%v\r\n", err)
 	} else {

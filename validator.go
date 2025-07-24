@@ -551,13 +551,7 @@ func (v *Validator) CheckScene(scene string) (err error) {
 
 // 验证
 func (v *Validator) Check() (err error) {
-	// 初始化属性
-	err = v.initAttr("")
-	if err != nil {
-		return
-	}
-	// 验证
-	err = v.handleCheck()
+	err = v.CheckScene("")
 	return
 }
 
@@ -735,10 +729,12 @@ func (v *Validator) handleCheck() (err error) {
 	if err != nil {
 		return
 	}
-	err = v.callValidatorInstanceHandleDatasMethod(datas, scene)
+	// err = v.callValidatorInstanceHandleDatasMethod(datas, scene)
+	err = v.validatorInstance.HandleDatas(datas, scene)
 	if err != nil {
 		return
 	}
+	fmt.Printf("qwe%v\r\n", v.validatorInstance)
 
 	// 设置验证后的数据
 	err = v.SetDatas(datas)

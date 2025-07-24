@@ -12,6 +12,7 @@ type UserLogin struct {
 	Password string `json:"password"`
 	Captcha  string `json:"captcha"`
 	D1       []int  `json:"d1"`
+	Custom   string `json:"-"`
 }
 
 func (u *UserLogin) DefineRules() map[string]interface{} {
@@ -38,8 +39,15 @@ func (u *UserLogin) DefineTitles() map[string]string {
 	}
 }
 
+func (u *UserLogin) HandleDatas(datas map[string]interface{}, scene string) error {
+	fmt.Printf("HandleDatas：%v\r\n", datas)
+	u.Custom = "自定义"
+	return nil
+}
+
 func main() {
-	userLogin := &UserLogin{Username: "admin（超管）", Password: "123456", Captcha: "1234", D1: []int{12, 23, 26}}
+	userLogin := &UserLogin{Username: "admin（超管）", Password: "123456", Captcha: "1234", D1: []int{12, 23, 34}}
+	// userLogin.Validator.SetValidatorInstance(userLogin)
 	validate.Create(userLogin)
 	err := userLogin.Check()
 	if err != nil {
@@ -47,4 +55,5 @@ func main() {
 	} else {
 		fmt.Println("验证通过")
 	}
+	fmt.Printf("Custom：%v\r\n", userLogin.Custom)
 }

@@ -8,6 +8,7 @@ import (
 )
 
 type ValidatorInterface interface {
+	InitValidator(validator ValidatorInterface)
 	DefineRules() map[string]interface{}
 	GetRules() (rules map[string]interface{}, err error)
 	SetRules(rules map[string]interface{}) (err error)    // 设置验证规则
@@ -49,7 +50,7 @@ type Validator struct {
 }
 
 // 设置验证器实例
-func (v *Validator) InitInstance(validator ValidatorInterface) {
+func (v *Validator) InitValidator(validator ValidatorInterface) {
 	v.validatorInstance = validator
 
 	// 获取指针的反射值

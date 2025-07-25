@@ -655,7 +655,6 @@ var Rules = map[string]Rule{
 		Name: "chsDashChar",
 		Fun: func(value interface{}, param string, datas map[string]interface{}, title string) error {
 			str, ok := value.(string)
-			fmt.Println(123, str)
 			if !ok || !chsDashCharRegex.MatchString(str) {
 				return errors.New(title + "只能是汉字、字母、数字、下划线_、短横线-及中文符号组合")
 			}

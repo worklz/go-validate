@@ -34,7 +34,7 @@ func (u *UserLogin) DefineTitles() map[string]string {
 
 func main() {
 	userLogin := &UserLogin{}
-	userLogin.InitInstance(userLogin)
+	userLogin.InitValidator(userLogin)
 	userLogin.SetDatas(map[string]interface{}{
 		"username": "管理员",
 		"password": "123456",

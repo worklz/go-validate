@@ -38,7 +38,7 @@ func (u *UserLogin) DefineScenes() map[string][]string {
 
 func main() {
 	userLogin := &UserLogin{Username: "admin", Password: "123456"}
-	userLogin.InitInstance(userLogin)
+	userLogin.InitValidator(userLogin)
 	err := userLogin.Check()
 	if err != nil {
 		fmt.Printf("登录验证失败！%v\r\n", err)

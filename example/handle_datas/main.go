@@ -63,7 +63,7 @@ func (u *UserParams) HandleDatas(datas map[string]interface{}, scene string) (er
 
 func main() {
 	userLogin := &UserParams{Username: "admin", Password: "123456", Captcha: "1234"}
-	userLogin.InitInstance(userLogin)
+	userLogin.InitValidator(userLogin)
 	err := userLogin.CheckScene("login")
 	if err != nil {
 		fmt.Printf("登录验证失败！%v\r\n", err)
@@ -73,7 +73,7 @@ func main() {
 	fmt.Printf("登录后的数据datas：%v 结构体UserId：%d\r\n", userLogin.Datas, userLogin.UserId)
 
 	userRegister := &UserParams{Username: "admin", Password: "123456"}
-	userRegister.InitInstance(userRegister)
+	userRegister.InitValidator(userRegister)
 	err = userRegister.CheckScene("register")
 	if err != nil {
 		fmt.Printf("注册验证失败！%v\r\n", err)
@@ -83,7 +83,7 @@ func main() {
 	fmt.Printf("注册后的数据datas：%v 结构体UserId：%d\r\n", userRegister.Datas, userRegister.UserId)
 
 	userInfo := &UserParams{UserId: 3}
-	userInfo.InitInstance(userInfo)
+	userInfo.InitValidator(userInfo)
 	err = userInfo.CheckScene("info")
 	if err != nil {
 		fmt.Printf("获取信息验证失败！%v\r\n", err)

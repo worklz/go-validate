@@ -12,7 +12,7 @@ type UserLogin struct {
 	Password string `json:"password"`
 	Captcha  string `json:"captcha"`
 	D1       []int  `json:"d1"`
-	Custom   string `json:"-"`
+	Custom   string
 }
 
 func (u *UserLogin) DefineRules() map[string]interface{} {
@@ -47,8 +47,7 @@ func (u *UserLogin) HandleDatas(datas map[string]interface{}, scene string) erro
 
 func main() {
 	userLogin := &UserLogin{Username: "admin（超管）", Password: "123456", Captcha: "1234", D1: []int{12, 23, 34}}
-	// userLogin.Validator.SetValidatorInstance(userLogin)
-	validate.Create(userLogin)
+	userLogin.InitInstance(userLogin)
 	err := userLogin.Check()
 	if err != nil {
 		fmt.Printf("验证失败！%v\r\n", err)

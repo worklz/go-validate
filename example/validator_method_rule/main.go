@@ -42,7 +42,7 @@ func (u *UserLogin) IsCaptcha(value interface{}, param string, datas map[string]
 
 func main() {
 	userLogin := &UserLogin{}
-	validate.Create(userLogin)
+	userLogin.InitInstance(userLogin)
 	userLogin.SetDatas(map[string]interface{}{
 		"username": "admin",
 		"password": "123456",

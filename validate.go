@@ -9,7 +9,7 @@ import (
 // 创建验证器
 func Create(validator ValidatorInterface) {
 	// 设置验证器实例
-	validator.SetValidatorInstance(validator)
+	validator.InitInstance(validator)
 }
 
 // 校验单个变量

@@ -8,7 +8,7 @@ import (
 )
 
 type ValidatorInterface interface {
-	SetValidatorInstance(validator ValidatorInterface)
+	InitInstance(validator ValidatorInterface)
 	DefineRules() map[string]interface{}
 	GetRules() (rules map[string]interface{}, err error)
 	SetRules(rules map[string]interface{}) (err error)    // 设置验证规则
@@ -50,7 +50,7 @@ type Validator struct {
 }
 
 // 设置验证器实例
-func (v *Validator) SetValidatorInstance(validator ValidatorInterface) {
+func (v *Validator) InitInstance(validator ValidatorInterface) {
 	v.validatorInstance = validator
 
 	// 获取指针的反射值
@@ -709,7 +709,6 @@ func (v *Validator) handleCheck() (err error) {
 					return
 				}
 			}
-
 			continue
 		}
 		// 定义的规则为闭包验证方法
@@ -723,87 +722,19 @@ func (v *Validator) handleCheck() (err error) {
 		err = v.SetSystemError(fmt.Sprintf("参数%s验证规则定义需为string或func(value interface{}, datas map[string]interface{}, title string) error类型", dataKey))
 		return
 	}
-
 	// 验证后处理数据
 	scene, err := v.GetScene()
 	if err != nil {
 		return
 	}
-	// err = v.callValidatorInstanceHandleDatasMethod(datas, scene)
 	err = v.validatorInstance.HandleDatas(datas, scene)
 	if err != nil {
 		return
 	}
-	fmt.Printf("qwe%v\r\n", v.validatorInstance)
-
 	// 设置验证后的数据
 	err = v.SetDatas(datas)
 	if err != nil {
 		return
-	}
-
-	return
-}
-
-// 调用验证器实例的验证后处理数据方法
-func (v *Validator) callValidatorInstanceHandleDatasMethod(datas map[string]interface{}, scene string) (err error) {
-	err = v.GetError()
-	if err != nil {
-		return
-	}
-	methodName := "HandleDatas"
-	// 获取指定名称的方法
-	method := v.validatorInstancePtr.MethodByName(methodName)
-	// 判断方法是否有效
-	if !method.IsValid() || !method.CanInterface() {
-		err = v.SetSystemError(fmt.Sprintf("方法%s不可调用", methodName))
-		return
-	}
-
-	// 检查参数数量
-	methodParamNum := method.Type().NumIn()
-	if methodParamNum != 2 {
-		err = v.SetSystemError(fmt.Sprintf("方法%s需定义2个参数，但实际有%d个参数", methodName, methodParamNum))
-		return
-	}
-	// 检查参数类型
-	no1MethodParamType := method.Type().In(0)
-	if no1MethodParamType.Kind() != reflect.Map || no1MethodParamType.Key().Kind() != reflect.String || no1MethodParamType.Elem().Kind() != reflect.Interface {
-		err = v.SetSystemError(fmt.Sprintf("方法%s的第1个参数类型不正确，需为map[string]interface{}", methodName))
-		return
-	}
-	no2MethodParamType := method.Type().In(1)
-	if no2MethodParamType.Kind() != reflect.String {
-		err = v.SetSystemError(fmt.Sprintf("方法%s的第2个参数类型不正确，需为string", methodName))
-		return
-	}
-
-	// 检查返回值数量
-	methodRetuenNum := method.Type().NumOut()
-	if methodRetuenNum != 1 {
-		err = v.SetSystemError(fmt.Sprintf("方法%s只需返回1个错误结果，但实际有%d个变量返回", methodName, methodRetuenNum))
-		return
-	}
-
-	// 检查返回值类型
-	no1MethodReturnType := method.Type().Out(0)
-	if no1MethodReturnType != reflect.TypeOf((*error)(nil)).Elem() {
-		err = v.SetSystemError(fmt.Sprintf("方法%s的返回值类型不正确，需为error", methodName))
-		return
-	}
-
-	// 准备反射调用所需的参数
-	paramValues := []reflect.Value{
-		reflect.ValueOf(datas),
-		reflect.ValueOf(scene),
-	}
-
-	// 调用方法并获取返回值
-	results := method.Call(paramValues)
-	if len(results) > 0 {
-		if resErr, ok := results[0].Interface().(error); ok {
-			err = resErr
-		}
 	}
 	return
 }

@@ -35,7 +35,7 @@ func (u *UserLogin) DefineScenes() map[string][]string {
 
 func main() {
 	userLogin := &UserLogin{}
-	validate.Create(userLogin)
+	userLogin.InitInstance(userLogin)
 	userLogin.SetDatas(map[string]interface{}{
 		"username": "admin",
 		"password": "123456",

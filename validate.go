@@ -6,12 +6,6 @@ import (
 	"strings"
 )
 
-// 创建验证器
-func Create(validator ValidatorInterface) {
-	// 设置验证器实例
-	validator.InitInstance(validator)
-}
-
 // 校验单个变量
 // data: 待验证的数据
 // rule: 规则

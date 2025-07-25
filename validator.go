@@ -8,7 +8,6 @@ import (
 )
 
 type ValidatorInterface interface {
-	InitInstance(validator ValidatorInterface)
 	DefineRules() map[string]interface{}
 	GetRules() (rules map[string]interface{}, err error)
 	SetRules(rules map[string]interface{}) (err error)    // 设置验证规则
